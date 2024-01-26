@@ -1,20 +1,18 @@
 import logging
-import os
-from typing import Annotated, Optional
-
-import vtk
+from typing import Optional
 
 import slicer
+import vtk
+from slicer import vtkMRMLScalarVolumeNode
+from slicer.ScriptedLoadableModule import *
 from slicer.i18n import tr as _
 from slicer.i18n import translate
-from slicer.ScriptedLoadableModule import *
-from slicer.util import VTKObservationMixin
 from slicer.parameterNodeWrapper import (
     parameterNodeWrapper,
-    WithinRange,
 )
+from slicer.util import VTKObservationMixin
 
-from slicer import vtkMRMLScalarVolumeNode
+from CMFSegmentatorLib import SegmentationLogic
 
 
 #
@@ -200,6 +198,7 @@ class CMFSegmentatorLogic(ScriptedLoadableModuleLogic):
     def __init__(self) -> None:
         """Called when the logic class is instantiated. Can be used for initializing member variables."""
         ScriptedLoadableModuleLogic.__init__(self)
+        self.segmentationLogic = SegmentationLogic()
 
     def getParameterNode(self):
         return CMFSegmentatorParameterNode(super().getParameterNode())
@@ -222,10 +221,10 @@ class CMFSegmentatorLogic(ScriptedLoadableModuleLogic):
         startTime = time.time()
         logging.info("Processing started")
 
-        logging.info("Segmentation Algorithm not implemented")
+        self.segmentationLogic.runCmfSegmentation(inputVolume)
 
         stopTime = time.time()
-        logging.info(f"Processing completed in {stopTime-startTime:.2f} seconds")
+        logging.info(f"Processing completed in {stopTime - startTime:.2f} seconds")
 
 
 #
