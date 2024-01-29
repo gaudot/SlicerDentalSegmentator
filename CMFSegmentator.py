@@ -1,6 +1,7 @@
 import logging
 from typing import Optional
 
+import qt
 import slicer
 import vtk
 from slicer import vtkMRMLScalarVolumeNode
@@ -13,6 +14,7 @@ from slicer.parameterNodeWrapper import (
 from slicer.util import VTKObservationMixin
 
 from CMFSegmentatorLib import SegmentationLogic
+from CMFSegmentatorLib.Utils import createButton
 
 
 #
@@ -38,6 +40,40 @@ This module provides an AI segmentation tool for cranio-maxillofacial CT scans b
         self.parent.acknowledgementText = _("""
 This file was originally developed for the <a href="https://orthodontie-ffo.org/">Fédération Française d'Orthodonthie</a> (FFO) for the analysis of cranio-maxillofacial data
 """)
+
+
+class PythonDependencyChecker(object):
+    """
+    Class responsible for installing the Modules dependencies
+    """
+
+    @classmethod
+    def areDependenciesSatisfied(cls):
+        try:
+            import torch
+            import nnunetv2
+            return True
+        except ImportError:
+            return False
+
+    @classmethod
+    def installDependenciesIfNeeded(cls, progressDialog=None):
+        if cls.areDependenciesSatisfied():
+            return
+
+        progressDialog = progressDialog or slicer.util.createProgressDialog(maximum=0)
+        progressDialog.labelText = "Installing PyTorch"
+
+        try:
+            # Try to install the best available pytorch version for the environment using the PyTorch Slicer extension
+            import PyTorchUtils
+            PyTorchUtils.PyTorchUtilsLogic().installTorch()
+        except ImportError:
+            # Fallback on default torch available on PIP
+            slicer.util.pip_install("torch")
+
+        progressDialog.labelText = "Installing nnunetv2"
+        slicer.util.pip_install("nnunetv2")
 
 
 #
@@ -80,6 +116,17 @@ class CMFSegmentatorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """Called when the user opens the module the first time and the widget is initialized."""
         ScriptedLoadableModuleWidget.setup(self)
 
+        if not PythonDependencyChecker.areDependenciesSatisfied():
+            error_msg = "Pytorch and nnUNetv2 are required by this plugin.\n" \
+                        "Please click on the Download button below to download and install these dependencies." \
+                        "(This may take several minutes)"
+            self.layout.addWidget(qt.QLabel(error_msg))
+            downloadDependenciesButton = createButton("Download dependencies and restart",
+                                                      self.downloadDependenciesAndRestart)
+            self.layout.addWidget(downloadDependenciesButton)
+            self.layout.addStretch()
+            return
+
         # Load widget from .ui file (created by Qt Designer).
         # Additional widgets can be instantiated manually and added to self.layout.
         uiWidget = slicer.util.loadUI(self.resourcePath("UI/CMFSegmentator.ui"))
@@ -107,6 +154,19 @@ class CMFSegmentatorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
 
+    def downloadDependenciesAndRestart(self):
+        progressDialog = slicer.util.createProgressDialog(maximum=0)
+
+        extensionManager = slicer.app.extensionsManagerModel()
+        if not extensionManager.isExtensionInstalled("PyTorch"):
+            progressDialog.labelText = "Installing the PyTorch Slicer extension"
+            extensionManager.interactive = False  # avoid popups
+            extensionManager.installExtensionFromServer("PyTorch")
+
+        PythonDependencyChecker.installDependenciesIfNeeded(progressDialog)
+
+        slicer.app.restart()
+
     def cleanup(self) -> None:
         """Called when the application closes and the module widget is destroyed."""
         self.removeObservers()
@@ -114,7 +174,8 @@ class CMFSegmentatorWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def enter(self) -> None:
         """Called each time the user opens this module."""
         # Make sure parameter node exists and observed
-        self.initializeParameterNode()
+        if self.logic is not None:
+            self.initializeParameterNode()
 
     def exit(self) -> None:
         """Called each time the user opens a different module."""
