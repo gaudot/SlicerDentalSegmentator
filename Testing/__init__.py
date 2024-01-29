@@ -1,1 +1,1 @@
-from SegmentationLogicTestCase import *
+from .SegmentationLogicTestCase import *
