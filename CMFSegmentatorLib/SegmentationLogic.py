@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -48,6 +49,8 @@ class SegmentationLogic:
         configuration = '3d_fullres'
         fold = 0  # only fold available
         disable_tta_flag = '--disable_tta' if disable_tta else ''
+        python_scripts_dir = Path(os.path.dirname(sys.executable)).joinpath("..", "lib", "Python", "Scripts")
+        os.environ['PATH'] = os.pathsep.join([python_scripts_dir.as_posix(), os.environ['PATH']])
 
         # Construct the command for the nnunnet inference script
         command = f'nnUNetv2_predict -i {input_dir} -o {output_dir} -d {dataset_name} -c {configuration} ' \
