@@ -23,8 +23,8 @@ def _dataFolderPath():
 
 
 def load_test_CT_volume():
-    return slicer.util.loadVolume(_dataFolderPath().joinpath("Patient_012_0000.nii.gz").as_posix())
+    return slicer.util.loadVolume(_dataFolderPath().joinpath("Patient_020_0000.nii.gz").as_posix())
 
 
 def get_test_multi_label_path():
-    return _dataFolderPath().joinpath("Patient_012_segmentation.nii.gz").as_posix()
+    return _dataFolderPath().joinpath("Patient_020.nii.gz").as_posix()

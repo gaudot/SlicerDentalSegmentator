@@ -1,24 +1,24 @@
 import qt
 
 
-def createButton(name, callback=None, isCheckable=False):
-  """Helper function to create a button with a text, callback on click and checkable status
+def createButton(name, callback=None, isCheckable=False, icon=None, toolTip="", parent=None):
+    """Helper function to create a button with a text, callback on click and checkable status
 
-  Parameters
-  ----------
-  name: str
-    Label of the button
-  callback: Callable
-    Called method when button is clicked
-  isCheckable: bool
-    If true, the button will be checkable
+    :param name: Text of the button
+    :param callback: Callback called on click if not None
+    :param isCheckable: When True, button can be checked (click will send check state)
+    :param icon: QIcon to use for button
+    :param toolTip: Tooltip displayed when hovering button
+    :param qtProperty: Optional list of property name and property value to set to button
+    :param parent: QWidget parent of this button
 
-  Returns
-  -------
-  QPushButton
-  """
-  button = qt.QPushButton(name)
-  if callback is not None:
-    button.connect("clicked(bool)", callback)
-  button.setCheckable(isCheckable)
-  return button
+    :returns: QPushButton
+    """
+    button = qt.QPushButton(name, parent)
+    if callback is not None:
+        button.connect("clicked(bool)", callback)
+    if icon:
+        button.setIcon(icon)
+    button.setCheckable(isCheckable)
+    button.setToolTip(toolTip)
+    return button
