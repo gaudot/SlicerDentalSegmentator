@@ -1,7 +1,5 @@
 import slicer
 
-from .Utils import createButton
-
 
 class PythonDependencyChecker:
     """
@@ -18,52 +16,34 @@ class PythonDependencyChecker:
             return False
 
     @classmethod
-    def installDependenciesIfNeeded(cls, progressDialog=None):
-        if cls.areDependenciesSatisfied():
-            return
-
-        progressDialog = progressDialog or slicer.util.createProgressDialog(maximum=0)
-        progressDialog.labelText = "Installing PyTorch"
-
-        # nnUNet requires at least PyTorch version 2.0 to work (otherwise, inference will return torch._dynamo import
-        # error).
-        torch_version = ">=2.0.0"
-        try:
-            # Try to install the best available pytorch version for the environment using the PyTorch Slicer extension
-            import PyTorchUtils
-            PyTorchUtils.PyTorchUtilsLogic().installTorch(torchVersionRequirement=torch_version)
-        except ImportError:
-            # Fallback on default torch available on PIP
-            slicer.util.pip_install(f"torch{torch_version}")
-
-        progressDialog.labelText = "Installing nnunetv2"
-        slicer.util.pip_install("nnunetv2==2.2.1")
-
-    @classmethod
-    def downloadDependenciesAndRestart(cls):
+    def downloadDependenciesIfNeeded(cls):
         progressDialog = slicer.util.createProgressDialog(maximum=0)
+        progressDialog.setCancelButton(None)
 
-        extensionManager = slicer.app.extensionsManagerModel()
-        if not extensionManager.isExtensionInstalled("PyTorch"):
-            progressDialog.labelText = "Installing the PyTorch Slicer extension"
-            extensionManager.interactive = False  # avoid popups
-            extensionManager.installExtensionFromServer("PyTorch")
+        try:
+            progressDialog.labelText = "Checking dependencies..."
+            slicer.app.processEvents()
 
-        cls.installDependenciesIfNeeded(progressDialog)
+            if cls.areDependenciesSatisfied():
+                return
 
-        slicer.app.restart()
+            progressDialog.labelText = "Installing PyTorch..."
+            slicer.app.processEvents()
 
-    @classmethod
-    def downloadDependencyWidget(cls, parent=None):
-        import qt
-        widget = qt.QWidget(parent)
-        layout = qt.QVBoxLayout(widget)
+            # nnUNet requires at least PyTorch version 2.0 to work (otherwise, inference will return torch._dynamo
+            # import error).
+            slicer.util.pip_install('light-the-torch>=0.5')
 
-        error_msg = (
-            "Pytorch and nnUNetv2 are required by this plugin.\n"
-            "Please click on the Download button below to download\n"
-            "and install these dependencies. (This may take several minutes)"
-        )
-        layout.addWidget(qt.QLabel(error_msg))
-        layout.addWidget(createButton("Download dependencies and restart", cls.downloadDependenciesAndRestart))
-        return widget
+            args = [
+                "install",
+                "torch>=2.0.0",
+                f"--pytorch-computation-backend=cu118"
+            ]
+            slicer.util._executePythonModule('light_the_torch', args)  # noqa
+
+            progressDialog.labelText = "Installing nnunetv2"
+            slicer.app.processEvents()
+            slicer.util.pip_install("nnunetv2==2.2.1")
+
+        finally:
+            progressDialog.close()
