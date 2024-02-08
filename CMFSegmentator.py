@@ -32,11 +32,9 @@ class CMFSegmentatorWidget(ScriptedLoadableModuleWidget):
     def setup(self) -> None:
         """Called when the user opens the module the first time and the widget is initialized."""
         ScriptedLoadableModuleWidget.setup(self)
-        self.layout.addWidget(
-            SegmentationWidget() if PythonDependencyChecker.areDependenciesSatisfied()
-            else PythonDependencyChecker.downloadDependencyWidget()
-        )
+        self.layout.addWidget(SegmentationWidget())
         self.layout.addStretch()
+        PythonDependencyChecker.downloadDependenciesIfNeeded()
 
 
 class CMFSegmentatorTest(ScriptedLoadableModuleTest):
