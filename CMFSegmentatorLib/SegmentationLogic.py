@@ -22,10 +22,14 @@ class SegmentationLogic:
         assert self._nnunet_results_folder.exists()
 
         self.inferenceProcess = qt.QProcess()
+        self.inferenceProcess.setProcessChannelMode(qt.QProcess.ForwardedChannels)
         self.inferenceProcess.finished.connect(self.onFinished)
         self.inferenceProcess.errorOccurred.connect(self.onErrorOccurred)
 
         self._tmpDir = qt.QTemporaryDir()
+
+    def __del__(self):
+        self.stopCmfSegmentation()
 
     def onErrorOccurred(self, *_):
         self.errorOccurred(bytes(self.inferenceProcess.readAllStandardError().data()).decode())
@@ -64,6 +68,7 @@ class SegmentationLogic:
         :param disable_tta: Set this flag to disable test time data augmentation in the form of mirroring.
          Faster, but less accurate inference.
         """
+        import torch
         # setup environment variables
         # not needed, just needs to be an existing directory
         os.environ['nnUNet_preprocessed'] = self._nnunet_results_folder.as_posix()
@@ -75,6 +80,7 @@ class SegmentationLogic:
         dataset_name = 'Dataset111_453CT'
         configuration = '3d_fullres'
         python_scripts_dir = Path(os.path.dirname(sys.executable)).joinpath("..", "lib", "Python", "Scripts")
+        device = device if torch.cuda.is_available() else "cpu"
 
         # Construct the command for the nnunnet inference script
         args = [

@@ -3,7 +3,7 @@ from slicer.ScriptedLoadableModule import *
 from slicer.i18n import tr, translate
 from slicer.util import VTKObservationMixin
 
-from CMFSegmentatorLib import SegmentationLogic, PythonDependencyChecker, SegmentationWidget
+from CMFSegmentatorLib import SegmentationLogic, SegmentationWidget
 
 
 class CMFSegmentator(ScriptedLoadableModule):
@@ -34,7 +34,6 @@ class CMFSegmentatorWidget(ScriptedLoadableModuleWidget):
         ScriptedLoadableModuleWidget.setup(self)
         self.layout.addWidget(SegmentationWidget())
         self.layout.addStretch()
-        PythonDependencyChecker.downloadDependenciesIfNeeded()
 
 
 class CMFSegmentatorTest(ScriptedLoadableModuleTest):
