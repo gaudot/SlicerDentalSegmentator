@@ -2,6 +2,7 @@ import qt
 import slicer
 from slicer.util import VTKObservationMixin
 
+from .PythonDependencyChecker import PythonDependencyChecker
 from .IconPath import icon, iconPath
 from .SegmentationLogic import SegmentationLogic
 from .Utils import createButton
@@ -49,6 +50,8 @@ class SegmentationWidget(qt.QWidget):
 
         self.isStopping = False
 
+        self.dependencyChecker = PythonDependencyChecker()
+
     def _updateStopIcon(self):
         self.stopButton.setIcon(qt.QIcon(self.loading.currentPixmap()))
 
@@ -68,15 +71,7 @@ class SegmentationWidget(qt.QWidget):
         self.applyButton.setVisible(True)
 
     def onApplyClicked(self, *_):
-        import torch
-        if not torch.cuda.is_available():
-            slicer.util.errorDisplay(
-                "This module is only compatible with torch CUDA.\n"
-                "Please make sure you have a compatible device, reinstall PyTorch 2.2.0+ with CUDA\n"
-                "and restart 3D Slicer to proceed."
-            )
-            return
-
+        self.dependencyChecker.downloadDependenciesIfNeeded()
         self.applyButton.setVisible(False)
         self.stopButton.setVisible(True)
         slicer.app.processEvents()

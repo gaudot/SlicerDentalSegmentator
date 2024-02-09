@@ -6,6 +6,9 @@ class PythonDependencyChecker:
     Class responsible for installing the Modules dependencies
     """
 
+    def __init__(self):
+        self.dependencyChecked = False
+
     @classmethod
     def areDependenciesSatisfied(cls):
         try:
@@ -15,16 +18,16 @@ class PythonDependencyChecker:
         except ImportError:
             return False
 
-    @classmethod
-    def downloadDependenciesIfNeeded(cls):
+    def downloadDependenciesIfNeeded(self):
+        if self.dependencyChecked:
+            return
+
         progressDialog = slicer.util.createProgressDialog(maximum=0)
         progressDialog.setCancelButton(None)
+        self.dependencyChecked = True
 
         try:
-            progressDialog.labelText = "Checking dependencies..."
-            slicer.app.processEvents()
-
-            if cls.areDependenciesSatisfied():
+            if self.areDependenciesSatisfied():
                 return
 
             progressDialog.labelText = "Installing PyTorch..."
@@ -44,6 +47,5 @@ class PythonDependencyChecker:
             progressDialog.labelText = "Installing nnunetv2"
             slicer.app.processEvents()
             slicer.util.pip_install("nnunetv2==2.2.1")
-
         finally:
             progressDialog.close()
