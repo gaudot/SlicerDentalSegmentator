@@ -1,3 +1,4 @@
+from enum import Flag, auto
 from typing import Optional
 
 import qt
@@ -7,7 +8,13 @@ from slicer.util import VTKObservationMixin
 from .IconPath import icon, iconPath
 from .PythonDependencyChecker import PythonDependencyChecker
 from .SegmentationLogic import SegmentationLogic, SegmentationLogicProtocol
-from .Utils import createButton
+from .Utils import createButton, addInCollapsibleLayout
+
+
+class ExportFormat(Flag):
+    OBJ = auto()
+    STL = auto()
+    NIFTI = auto()
 
 
 class SegmentationWidget(qt.QWidget):
@@ -44,6 +51,18 @@ class SegmentationWidget(qt.QWidget):
         self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
         self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
 
+        # Export Widget
+        exportWidget = qt.QWidget()
+        exportLayout = qt.QFormLayout(exportWidget)
+        self.stlCheckBox = qt.QCheckBox(exportWidget)
+        self.stlCheckBox.setChecked(True)
+        self.objCheckBox = qt.QCheckBox(exportWidget)
+        self.niftiCheckBox = qt.QCheckBox(exportWidget)
+        exportLayout.addRow("Export STL", self.stlCheckBox)
+        exportLayout.addRow("Export OBJ", self.objCheckBox)
+        exportLayout.addRow("Export NIFTI", self.niftiCheckBox)
+        exportLayout.addRow(createButton("Export", callback=self.onExportClicked, parent=exportWidget))
+
         layout = qt.QVBoxLayout(self)
         layout.addWidget(self.inputSelector)
         layout.addWidget(self.segmentationNodeSelector)
@@ -67,6 +86,7 @@ class SegmentationWidget(qt.QWidget):
         layout.addWidget(self.applyButton)
         layout.addWidget(self.stopButton)
         layout.addWidget(self.segmentEditorWidget)
+        addInCollapsibleLayout(exportWidget, layout, "Export segmentation", isCollapsed=False)
 
         self.logic.inferenceFinished.connect(self.onInferenceFinished)
         self.logic.errorOccurred.connect(self.onInferenceError)
@@ -183,3 +203,58 @@ class SegmentationWidget(qt.QWidget):
             return
 
         slicer.util.errorDisplay("Encountered error during inference :\n" + errorMsg)
+
+    def getSelectedExportFormats(self):
+        selectedFormats = ExportFormat(0)
+        checkBoxes = {
+            self.objCheckBox: ExportFormat.OBJ,
+            self.stlCheckBox: ExportFormat.STL,
+            self.niftiCheckBox: ExportFormat.NIFTI,
+        }
+
+        for checkBox, exportFormat in checkBoxes.items():
+            if checkBox.isChecked():
+                selectedFormats |= exportFormat
+
+        return selectedFormats
+
+    def onExportClicked(self):
+        segmentationNode = self.getCurrentSegmentationNode()
+        if not segmentationNode:
+            slicer.util.warningDisplay("Please select a valid segmentation before exporting.")
+            return
+
+        selectedFormats = self.getSelectedExportFormats()
+        if selectedFormats == ExportFormat(0):
+            slicer.util.warningDisplay("Please select at least one export format before exporting.")
+            return
+
+        folderPath = qt.QFileDialog.getExistingDirectory(self, "Please select the export folder")
+        if not folderPath:
+            return
+
+        with slicer.util.tryWithErrorDisplay(f"Export to {folderPath} failed.", waitCursor=True):
+            self.exportSegmentation(segmentationNode, folderPath, selectedFormats)
+            slicer.util.infoDisplay(f"Export successful to {folderPath}.")
+
+    @staticmethod
+    def exportSegmentation(segmentationNode, folderPath, selectedFormats):
+        for closedSurfaceExport in [ExportFormat.STL, ExportFormat.OBJ]:
+            if selectedFormats & closedSurfaceExport:
+                slicer.vtkSlicerSegmentationsModuleLogic.ExportSegmentsClosedSurfaceRepresentationToFiles(
+                    folderPath,
+                    segmentationNode,
+                    None,
+                    closedSurfaceExport.name,
+                    True,
+                    1.0,
+                    False
+                )
+
+        if selectedFormats & ExportFormat.NIFTI:
+            slicer.vtkSlicerSegmentationsModuleLogic.ExportSegmentsBinaryLabelmapRepresentationToFiles(
+                folderPath,
+                segmentationNode,
+                None,
+                "nii.gz"
+            )

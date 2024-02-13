@@ -1,8 +1,10 @@
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock
 
 import slicer
 
-from CMFSegmentatorLib import SegmentationWidget, Signal
+from CMFSegmentatorLib import SegmentationWidget, Signal, ExportFormat
 from .Utils import CMFTestCase, get_test_multi_label_path
 
 
@@ -94,3 +96,24 @@ class SegmentationWidgetTestCase(CMFTestCase):
         segmentIds = [segmentation.GetNthSegmentID(i) for i in range(segmentation.GetNumberOfSegments())]
         segmentNames = {segmentation.GetSegment(segmentId).GetName() for segmentId in segmentIds}
         self.assertEqual(segmentNames, exp_names)
+
+    def test_can_export_segmentation_to_file(self):
+        self.logic.inferenceFinished()
+        slicer.app.processEvents()
+        self.widget.objCheckBox.setChecked(True)
+        self.widget.stlCheckBox.setChecked(True)
+        self.widget.niftiCheckBox.setChecked(True)
+        allFormats = self.widget.getSelectedExportFormats()
+        self.assertEqual(
+            allFormats,
+            ExportFormat.NIFTI | ExportFormat.STL | ExportFormat.OBJ
+        )
+
+        with TemporaryDirectory() as tmp:
+            self.widget.exportSegmentation(self.widget.getCurrentSegmentationNode(), tmp, allFormats)
+            slicer.app.processEvents()
+
+            tmpPath = Path(tmp)
+            self.assertEqual(len(list(tmpPath.glob("*.stl"))), 5)
+            self.assertEqual(len(list(tmpPath.glob("*.obj"))), 1)
+            self.assertEqual(len(list(tmpPath.glob("*.nii.gz"))), 1)

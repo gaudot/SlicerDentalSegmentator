@@ -22,3 +22,19 @@ def createButton(name, callback=None, isCheckable=False, icon=None, toolTip="", 
     button.setCheckable(isCheckable)
     button.setToolTip(toolTip)
     return button
+
+
+def addInCollapsibleLayout(childWidget, parentLayout, collapsibleText, isCollapsed=True):
+    """
+    Wraps input childWidget into a collapsible button attached to input parentLayout.
+    collapsibleText is writen next to collapsible button. Initial collapsed status is customizable
+    (collapsed by default)
+    """
+    import ctk
+    collapsibleButton = ctk.ctkCollapsibleButton()
+    collapsibleButton.text = collapsibleText
+    collapsibleButton.collapsed = isCollapsed
+    parentLayout.addWidget(collapsibleButton)
+    collapsibleButtonLayout = qt.QVBoxLayout()
+    collapsibleButtonLayout.addWidget(childWidget)
+    collapsibleButton.setLayout(collapsibleButtonLayout)
