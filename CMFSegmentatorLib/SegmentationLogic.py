@@ -1,11 +1,33 @@
+import json
 import os
 import sys
 from pathlib import Path
+from typing import Protocol, List, Dict
 
 import qt
 import slicer
 
 from .Signal import Signal
+
+
+class SegmentationLogicProtocol(Protocol):
+    inferenceFinished: Signal
+    errorOccurred: Signal
+
+    def startCmfSegmentation(self, volumeNode: "slicer.vtkMRMLScalarVolumeNode") -> None:
+        pass
+
+    def stopCmfSegmentation(self):
+        pass
+
+    def waitForSegmentationFinished(self):
+        pass
+
+    def loadCmfSegmentation(self) -> "slicer.vtkMRMLSegmentationNode":
+        pass
+
+    def getSegmentationLabels(self) -> Dict[str, int]:
+        pass
 
 
 class SegmentationLogic:
@@ -21,6 +43,8 @@ class SegmentationLogic:
         self._nnunet_results_folder = mlResourcesDir.joinpath("CMFSegmentationModel")
         assert self._nnunet_results_folder.exists()
 
+        self._dataSetPath = next(self._nnunet_results_folder.rglob("dataset.json"))
+
         self.inferenceProcess = qt.QProcess()
         self.inferenceProcess.setProcessChannelMode(qt.QProcess.ForwardedChannels)
         self.inferenceProcess.finished.connect(self.onFinished)
@@ -30,6 +54,11 @@ class SegmentationLogic:
 
     def __del__(self):
         self.stopCmfSegmentation()
+
+    def getSegmentationLabels(self) -> Dict[str, int]:
+        with open(self._dataSetPath, "r") as f:
+            data = json.loads(f.read())
+            return data["labels"]
 
     def onErrorOccurred(self, *_):
         self.errorOccurred(bytes(self.inferenceProcess.readAllStandardError().data()).decode())
@@ -49,7 +78,7 @@ class SegmentationLogic:
     def waitForSegmentationFinished(self):
         self.inferenceProcess.waitForFinished(-1)
 
-    def loadCmfSegmentation(self):
+    def loadCmfSegmentation(self) -> "slicer.vtkMRMLSegmentationNode":
         try:
             return slicer.util.loadSegmentation(self._outFile)
         except StopIteration:

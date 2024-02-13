@@ -1,17 +1,20 @@
+from typing import Optional
+
 import qt
 import slicer
 from slicer.util import VTKObservationMixin
 
-from .PythonDependencyChecker import PythonDependencyChecker
 from .IconPath import icon, iconPath
-from .SegmentationLogic import SegmentationLogic
+from .PythonDependencyChecker import PythonDependencyChecker
+from .SegmentationLogic import SegmentationLogic, SegmentationLogicProtocol
 from .Utils import createButton
 
 
 class SegmentationWidget(qt.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, logic: Optional[SegmentationLogicProtocol] = None, parent=None):
         super().__init__(parent)
-        self.logic = SegmentationLogic()
+        self.logic = logic or SegmentationLogic()
+        self._prevSegmentationNode = None
 
         self.inputSelector = slicer.qMRMLNodeComboBox(self)
         self.inputSelector.nodeTypes = ["vtkMRMLScalarVolumeNode"]
@@ -20,10 +23,30 @@ class SegmentationWidget(qt.QWidget):
         self.inputSelector.showHidden = False
         self.inputSelector.removeEnabled = False
         self.inputSelector.setMRMLScene(slicer.mrmlScene)
-        self.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateApplyEnabled)
+        self.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onInputChanged)
+
+        # Configure segment editor
+        self.segmentationNodeSelector = slicer.qMRMLNodeComboBox(self)
+        self.segmentationNodeSelector.nodeTypes = ["vtkMRMLSegmentationNode"]
+        self.segmentationNodeSelector.selectNodeUponCreation = False
+        self.segmentationNodeSelector.addEnabled = True
+        self.segmentationNodeSelector.removeEnabled = True
+        self.segmentationNodeSelector.showHidden = False
+        self.segmentationNodeSelector.renameEnabled = True
+        self.segmentationNodeSelector.setMRMLScene(slicer.mrmlScene)
+        self.segmentationNodeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateSegmentEditorWidget)
+
+        # Create segment editor widget
+        self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget(self)
+        self.segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
+        self.segmentEditorWidget.setSegmentationNodeSelectorVisible(False)
+        self.segmentEditorWidget.setSourceVolumeNodeSelectorVisible(False)
+        self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
+        self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
 
         layout = qt.QVBoxLayout(self)
         layout.addWidget(self.inputSelector)
+        layout.addWidget(self.segmentationNodeSelector)
         self.applyButton = createButton(
             "Apply",
             callback=self.onApplyClicked,
@@ -43,10 +66,11 @@ class SegmentationWidget(qt.QWidget):
 
         layout.addWidget(self.applyButton)
         layout.addWidget(self.stopButton)
+        layout.addWidget(self.segmentEditorWidget)
 
         self.logic.inferenceFinished.connect(self.onInferenceFinished)
         self.logic.errorOccurred.connect(self.onInferenceError)
-        self.updateApplyEnabled()
+        self.onInputChanged()
 
         self.isStopping = False
 
@@ -75,13 +99,37 @@ class SegmentationWidget(qt.QWidget):
         self.applyButton.setVisible(False)
         self.stopButton.setVisible(True)
         slicer.app.processEvents()
-        self.logic.startCmfSegmentation(self._currentVolumeNode())
+        self.logic.startCmfSegmentation(self.getCurrentVolumeNode())
 
-    def updateApplyEnabled(self, *_):
-        self.applyButton.setEnabled(self._currentVolumeNode() is not None)
+    def onInputChanged(self, *_):
+        self.applyButton.setEnabled(self.getCurrentVolumeNode() is not None)
+        self.updateSegmentEditorWidget()
 
-    def _currentVolumeNode(self):
+    def updateSegmentEditorWidget(self, *_):
+        if self._prevSegmentationNode:
+            self._prevSegmentationNode.SetDisplayVisibility(False)
+
+        segmentationNode = self.getCurrentSegmentationNode()
+        self._prevSegmentationNode = segmentationNode
+        self._initializeSegmentationNodeDisplay(segmentationNode)
+        self.segmentEditorWidget.setSegmentationNode(segmentationNode)
+        self.segmentEditorWidget.setSourceVolumeNode(self.getCurrentVolumeNode())
+
+    def _initializeSegmentationNodeDisplay(self, segmentationNode):
+        if not segmentationNode:
+            return
+
+        segmentationNode.SetReferenceImageGeometryParameterFromVolumeNode(self.getCurrentVolumeNode())
+        if not segmentationNode.GetDisplayNode():
+            segmentationNode.CreateDefaultDisplayNodes()
+
+        segmentationNode.SetDisplayVisibility(True)
+
+    def getCurrentVolumeNode(self):
         return self.inputSelector.currentNode()
+
+    def getCurrentSegmentationNode(self):
+        return self.segmentationNodeSelector.currentNode()
 
     def onInferenceFinished(self, *_):
         if self.isStopping:
@@ -91,9 +139,44 @@ class SegmentationWidget(qt.QWidget):
         self.applyButton.setVisible(True)
 
         try:
-            self.logic.loadCmfSegmentation()
+            self._loadSegmentationResults()
         except RuntimeError as e:
             slicer.util.errorDisplay(e)
+
+    def _loadSegmentationResults(self):
+        currentSegmentation = self.getCurrentSegmentationNode()
+        segmentationNode = self.logic.loadCmfSegmentation()
+        segmentationNode.SetName(self.getCurrentVolumeNode().GetName() + "_Segmentation")
+        if currentSegmentation is not None:
+            self._copySegmentationResultsToExistingNode(currentSegmentation, segmentationNode)
+        else:
+            self.segmentationNodeSelector.setCurrentNode(segmentationNode)
+        slicer.app.processEvents()
+        self._updateSegmentationLabels()
+
+    @staticmethod
+    def _copySegmentationResultsToExistingNode(currentSegmentation, segmentationNode):
+        currentName = currentSegmentation.GetName()
+        currentSegmentation.Copy(segmentationNode)
+        currentSegmentation.SetName(currentName)
+        slicer.mrmlScene.RemoveNode(segmentationNode)
+
+    def _updateSegmentationLabels(self):
+        segmentationNode = self.getCurrentSegmentationNode()
+        if not segmentationNode:
+            return
+
+        segmentation = segmentationNode.GetSegmentation()
+        segmentIds = [segmentation.GetNthSegmentID(i) for i in range(segmentation.GetNumberOfSegments())]
+
+        labels = [
+            k for k, v in
+            sorted(self.logic.getSegmentationLabels().items(), key=lambda x: x[1]) if
+            k != "background"
+        ]
+
+        for segmentId, label in zip(segmentIds, labels):
+            segmentation.GetSegment(segmentId).SetName(label)
 
     def onInferenceError(self, errorMsg):
         if self.isStopping:

@@ -1,10 +1,10 @@
 from unittest.mock import MagicMock
 
 import pytest
+import slicer
 
 from CMFSegmentatorLib import SegmentationLogic
 from .Utils import CMFTestCase, load_test_CT_volume
-import slicer
 
 
 class SegmentationLogicTestCase(CMFTestCase):
