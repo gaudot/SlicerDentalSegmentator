@@ -1,3 +1,4 @@
+import datetime
 from enum import Flag, auto
 from typing import Optional
 
@@ -72,24 +73,46 @@ class SegmentationWidget(qt.QWidget):
             toolTip="Click to run the CMF segmentation.",
             icon=icon("start_icon.png")
         )
+
+        self.currentInfoTextEdit = qt.QTextEdit()
+        self.currentInfoTextEdit.setReadOnly(True)
+        self.currentInfoTextEdit.setLineWrapMode(qt.QTextEdit.NoWrap)
+        self.fullInfoLogs = []
+        self.stopWidget = qt.QVBoxLayout()
+
         self.stopButton = createButton(
             "Stop",
             callback=self.onStopClicked,
             toolTip="Click to Stop the CMF segmentation."
         )
-        self.stopButton.setVisible(False)
+        self.stopWidget = qt.QWidget(self)
+        stopLayout = qt.QVBoxLayout(self.stopWidget)
+        stopLayout.setContentsMargins(0, 0, 0, 0)
+        stopLayout.addWidget(self.stopButton)
+        stopLayout.addWidget(self.currentInfoTextEdit)
+        self.stopWidget.setVisible(False)
         self.loading = qt.QMovie(iconPath("loading.gif"))
         self.loading.setScaledSize(qt.QSize(24, 24))
         self.loading.frameChanged.connect(self._updateStopIcon)
         self.loading.start()
 
-        layout.addWidget(self.applyButton)
-        layout.addWidget(self.stopButton)
+        self.applyWidget = qt.QWidget(self)
+        applyLayout = qt.QHBoxLayout(self.applyWidget)
+        applyLayout.setContentsMargins(0, 0, 0, 0)
+        applyLayout.addWidget(self.applyButton, 1)
+        applyLayout.addWidget(
+            createButton("", callback=self.showInfoLogs, icon=icon("info.png"), toolTip="Show logs.")
+        )
+
+        layout.addWidget(self.applyWidget)
+        layout.addWidget(self.stopWidget)
         layout.addWidget(self.segmentEditorWidget)
+        layout.addWidget(exportWidget)
         addInCollapsibleLayout(exportWidget, layout, "Export segmentation", isCollapsed=False)
 
         self.logic.inferenceFinished.connect(self.onInferenceFinished)
         self.logic.errorOccurred.connect(self.onInferenceError)
+        self.logic.progressInfo.connect(self.onProgressInfo)
         self.onInputChanged()
 
         self.isStopping = False
@@ -111,13 +134,14 @@ class SegmentationWidget(qt.QWidget):
         slicer.app.processEvents()
         self.isStopping = False
 
-        self.stopButton.setVisible(False)
-        self.applyButton.setVisible(True)
+        self.stopWidget.setVisible(False)
+        self.applyWidget.setVisible(True)
 
     def onApplyClicked(self, *_):
         self.dependencyChecker.downloadDependenciesIfNeeded()
-        self.applyButton.setVisible(False)
-        self.stopButton.setVisible(True)
+        self.applyWidget.setVisible(False)
+        self.stopWidget.setVisible(True)
+        self.currentInfoTextEdit.clear()
         slicer.app.processEvents()
         self.logic.startCmfSegmentation(self.getCurrentVolumeNode())
 
@@ -155,13 +179,16 @@ class SegmentationWidget(qt.QWidget):
         if self.isStopping:
             return
 
-        self.stopButton.setVisible(False)
-        self.applyButton.setVisible(True)
+        self.stopWidget.setVisible(False)
+        self.applyWidget.setVisible(True)
 
         try:
+            self.onProgressInfo("Loading inference results...\n")
             self._loadSegmentationResults()
+            self.onProgressInfo("Inference ended successfully.\n")
         except RuntimeError as e:
             slicer.util.errorDisplay(e)
+            self.onProgressInfo(f"Error loading results {e}\n")
 
     def _loadSegmentationResults(self):
         currentSegmentation = self.getCurrentSegmentationNode()
@@ -203,6 +230,41 @@ class SegmentationWidget(qt.QWidget):
             return
 
         slicer.util.errorDisplay("Encountered error during inference :\n" + errorMsg)
+
+    def onProgressInfo(self, infoMsg):
+        infoMsg = self.removeImageIOError(infoMsg)
+        self.currentInfoTextEdit.insertPlainText(infoMsg)
+        self.moveTextEditToEnd(self.currentInfoTextEdit)
+        self.insertDatedInfoLogs(infoMsg)
+        slicer.app.processEvents()
+
+    @staticmethod
+    def removeImageIOError(infoMsg):
+        """
+        Filter out ImageIO error which comes from ITK and is of no interest to current processing.
+        """
+        return "\n".join([msg for msg in infoMsg.split("\n") if "Error ImageIO factory" not in msg])
+
+    def insertDatedInfoLogs(self, infoMsg):
+        now = qt.QDateTime.currentDateTime().toString("yyyy/MM/dd hh:mm:ss.zzz")
+        self.fullInfoLogs.extend([f"{now} :: {msgLine}" for msgLine in infoMsg.split("\n")])
+
+    def showInfoLogs(self):
+        dialog = qt.QDialog()
+        layout = qt.QVBoxLayout(dialog)
+
+        textEdit = qt.QTextEdit()
+        textEdit.setReadOnly(True)
+        textEdit.append("\n".join(self.fullInfoLogs))
+        textEdit.setLineWrapMode(qt.QTextEdit.NoWrap)
+        self.moveTextEditToEnd(textEdit)
+        layout.addWidget(textEdit)
+        dialog.setWindowFlags(qt.Qt.WindowCloseButtonHint)
+        dialog.exec()
+
+    @staticmethod
+    def moveTextEditToEnd(textEdit):
+        textEdit.verticalScrollBar().setValue(textEdit.verticalScrollBar().maximum)
 
     def getSelectedExportFormats(self):
         selectedFormats = ExportFormat(0)

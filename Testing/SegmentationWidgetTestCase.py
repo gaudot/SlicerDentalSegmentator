@@ -12,6 +12,7 @@ class MockLogic:
     def __init__(self):
         self.inferenceFinished = Signal()
         self.errorOccurred = Signal("str")
+        self.progressInfo = Signal("str")
         self.startCmfSegmentation = MagicMock()
         self.stopCmfSegmentation = MagicMock()
         self.waitForSegmentationFinished = MagicMock()

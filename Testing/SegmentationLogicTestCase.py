@@ -17,15 +17,18 @@ class SegmentationLogicTestCase(CMFTestCase):
     def test_can_run_head_segmentation(self):
         inferenceFinishedMock = MagicMock()
         errorMock = MagicMock()
+        infoMock = MagicMock()
 
         self.logic.inferenceFinished.connect(inferenceFinishedMock)
         self.logic.errorOccurred.connect(errorMock)
+        self.logic.progressInfo.connect(infoMock)
 
         self.logic.startCmfSegmentation(self.volume)
         while not inferenceFinishedMock.called and not errorMock.called:
             slicer.app.processEvents()
 
         inferenceFinishedMock.assert_called()
+        infoMock.assert_called()
         errorMock.assert_not_called()
 
         segmentation = self.logic.loadCmfSegmentation()

@@ -13,6 +13,7 @@ from .Signal import Signal
 class SegmentationLogicProtocol(Protocol):
     inferenceFinished: Signal
     errorOccurred: Signal
+    progressInfo: Signal
 
     def startCmfSegmentation(self, volumeNode: "slicer.vtkMRMLScalarVolumeNode") -> None:
         pass
@@ -34,6 +35,7 @@ class SegmentationLogic:
     def __init__(self):
         self.inferenceFinished = Signal()
         self.errorOccurred = Signal("str")
+        self.progressInfo = Signal("str")
 
         fileDir = Path(__file__).parent
         mlResourcesDir = fileDir.joinpath("..", "Resources", "ML").resolve()
@@ -46,14 +48,20 @@ class SegmentationLogic:
         self._dataSetPath = next(self._nnunet_results_folder.rglob("dataset.json"))
 
         self.inferenceProcess = qt.QProcess()
-        self.inferenceProcess.setProcessChannelMode(qt.QProcess.ForwardedChannels)
+        self.inferenceProcess.setProcessChannelMode(qt.QProcess.MergedChannels)
         self.inferenceProcess.finished.connect(self.onFinished)
         self.inferenceProcess.errorOccurred.connect(self.onErrorOccurred)
+        self.inferenceProcess.readyRead.connect(self.onCheckStandardOutput)
 
         self._tmpDir = qt.QTemporaryDir()
 
     def __del__(self):
         self.stopCmfSegmentation()
+
+    def onCheckStandardOutput(self):
+        info = bytes(self.inferenceProcess.readAll().data()).decode()
+        if info:
+            self.progressInfo(info)
 
     def getSegmentationLabels(self) -> Dict[str, int]:
         with open(self._dataSetPath, "r") as f:
@@ -86,6 +94,7 @@ class SegmentationLogic:
 
     def _stopInferenceProcess(self):
         if self.inferenceProcess.state() == self.inferenceProcess.Running:
+            self.progressInfo("Stopping previous inference...\n")
             self.inferenceProcess.kill()
 
     def _startInferenceProcess(self, device='cuda', step_size=0.5, disable_tta=True):
@@ -119,14 +128,16 @@ class SegmentationLogic:
             "-c", configuration,
             "-f", "0",
             "-step_size", step_size,
-            "-device", device
+            "-device", device,
+            "--verbose"
         ]
 
         if disable_tta:
             args.append("--disable_tta")
 
+        self.progressInfo("nnUNet preprocessing...\n")
         program = next(python_scripts_dir.glob("nnUNetv2_predict*")).resolve()
-        self.inferenceProcess.start(program, args)
+        self.inferenceProcess.start(program, args, qt.QProcess.Unbuffered | qt.QProcess.ReadWrite)
 
     @property
     def _outFile(self) -> str:
@@ -138,6 +149,7 @@ class SegmentationLogic:
         self._inDir.mkdir(parents=True)
 
         # Name of the volume should match expected nnUNet conventions
+        self.progressInfo("Transferring volume to nnUNet...\n")
         volumePath = self._inDir.joinpath("volume_0000.nii.gz")
         assert slicer.util.exportNode(volumeNode, volumePath)
         assert volumePath.exists(), "Failed to export volume for segmentation."
