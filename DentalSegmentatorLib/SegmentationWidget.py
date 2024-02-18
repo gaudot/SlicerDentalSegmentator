@@ -72,7 +72,7 @@ class SegmentationWidget(qt.QWidget):
         self.applyButton = createButton(
             "Apply",
             callback=self.onApplyClicked,
-            toolTip="Click to run the CMF segmentation.",
+            toolTip="Click to run the segmentation.",
             icon=icon("start_icon.png")
         )
 
@@ -85,7 +85,7 @@ class SegmentationWidget(qt.QWidget):
         self.stopButton = createButton(
             "Stop",
             callback=self.onStopClicked,
-            toolTip="Click to Stop the CMF segmentation."
+            toolTip="Click to Stop the segmentation."
         )
         self.stopWidget = qt.QWidget(self)
         stopLayout = qt.QVBoxLayout(self.stopWidget)
@@ -137,7 +137,7 @@ class SegmentationWidget(qt.QWidget):
         """
 
         self.isStopping = True
-        self.logic.stopCmfSegmentation()
+        self.logic.stopDentalSegmentation()
         self.logic.waitForSegmentationFinished()
         slicer.app.processEvents()
         self.isStopping = False
@@ -147,11 +147,32 @@ class SegmentationWidget(qt.QWidget):
 
     def onApplyClicked(self, *_):
         self.dependencyChecker.downloadDependenciesIfNeeded()
+        self._runSegmentation()
+
+    def _runSegmentation(self):
+        if not self.dependencyChecker.areDependenciesSatisfied():
+            return slicer.util.warningDisplay(
+                "Extension dependencies were not correctly installed."
+                "\nPlease check the logs and reinstall the dependencies before proceeding."
+            )
+
+        import torch
+        if not torch.cuda.is_available():
+            ret = qt.QMessageBox.question(
+                self,
+                "CUDA not available",
+                "CUDA is not currently available on your system.\n"
+                "Running the segmentation may take up to 1 hour.\n"
+                "Would you like to proceed?"
+            )
+            if ret == qt.QMessageBox.No:
+                return
+
         self.applyWidget.setVisible(False)
         self.stopWidget.setVisible(True)
         self.currentInfoTextEdit.clear()
         slicer.app.processEvents()
-        self.logic.startCmfSegmentation(self.getCurrentVolumeNode())
+        self.logic.startDentalSegmentation(self.getCurrentVolumeNode())
 
     def onInputChanged(self, *_):
         self.applyButton.setEnabled(self.getCurrentVolumeNode() is not None)
@@ -200,7 +221,7 @@ class SegmentationWidget(qt.QWidget):
 
     def _loadSegmentationResults(self):
         currentSegmentation = self.getCurrentSegmentationNode()
-        segmentationNode = self.logic.loadCmfSegmentation()
+        segmentationNode = self.logic.loadDentalSegmentation()
         segmentationNode.SetName(self.getCurrentVolumeNode().GetName() + "_Segmentation")
         if currentSegmentation is not None:
             self._copySegmentationResultsToExistingNode(currentSegmentation, segmentationNode)

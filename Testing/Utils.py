@@ -4,7 +4,7 @@ from pathlib import Path
 import slicer
 
 
-class CMFTestCase(unittest.TestCase):
+class DentalSegmentatorTestCase(unittest.TestCase):
     def setUp(self):
         self._clearScene()
 

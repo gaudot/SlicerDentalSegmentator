@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 
 import slicer
 
-from CMFSegmentatorLib import SegmentationWidget, Signal, ExportFormat
-from .Utils import CMFTestCase, get_test_multi_label_path
+from DentalSegmentatorLib import SegmentationWidget, Signal, ExportFormat
+from .Utils import DentalSegmentatorTestCase, get_test_multi_label_path
 
 
 class MockLogic:
@@ -13,18 +13,18 @@ class MockLogic:
         self.inferenceFinished = Signal()
         self.errorOccurred = Signal("str")
         self.progressInfo = Signal("str")
-        self.startCmfSegmentation = MagicMock()
-        self.stopCmfSegmentation = MagicMock()
+        self.startDentalSegmentation = MagicMock()
+        self.stopDentalSegmentation = MagicMock()
         self.waitForSegmentationFinished = MagicMock()
-        self.loadCmfSegmentation = MagicMock()
-        self.loadCmfSegmentation.side_effect = self.load_segmentation
+        self.loadDentalSegmentation = MagicMock()
+        self.loadDentalSegmentation.side_effect = self.load_segmentation
 
     @staticmethod
     def load_segmentation():
         return slicer.util.loadSegmentation(get_test_multi_label_path())
 
 
-class SegmentationWidgetTestCase(CMFTestCase):
+class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
     def setUp(self):
         import SampleData
         super().setUp()
@@ -49,20 +49,20 @@ class SegmentationWidgetTestCase(CMFTestCase):
         self.assertFalse(self.widget.applyButton.isVisible())
         self.assertTrue(self.widget.stopButton.isVisible())
 
-        self.logic.startCmfSegmentation.assert_called_once_with(self.node)
+        self.logic.startDentalSegmentation.assert_called_once_with(self.node)
         self.logic.inferenceFinished()
         slicer.app.processEvents()
 
         self.assertTrue(self.widget.applyButton.isVisible())
         self.assertFalse(self.widget.stopButton.isVisible())
-        self.logic.loadCmfSegmentation.assert_called_once()
+        self.logic.loadDentalSegmentation.assert_called_once()
 
     def test_can_kill_segmentation(self):
         self.widget.applyButton.click()
-        self.logic.startCmfSegmentation.assert_called_once()
+        self.logic.startDentalSegmentation.assert_called_once()
 
         self.widget.stopButton.click()
-        self.logic.stopCmfSegmentation.assert_called_once()
+        self.logic.stopDentalSegmentation.assert_called_once()
         self.logic.waitForSegmentationFinished.assert_called_once()
         self.assertTrue(self.widget.applyButton.isVisible())
         self.assertFalse(self.widget.stopButton.isVisible())
@@ -72,7 +72,7 @@ class SegmentationWidgetTestCase(CMFTestCase):
         slicer.app.processEvents()
         self.logic.inferenceFinished()
         slicer.app.processEvents()
-        self.assertEqual(self.logic.loadCmfSegmentation.call_count, 2)
+        self.assertEqual(self.logic.loadDentalSegmentation.call_count, 2)
         self.assertEqual(len(list(slicer.mrmlScene.GetNodesByClass("vtkMRMLSegmentationNode"))), 1)
 
     def test_loading_sets_correct_segment_names(self):

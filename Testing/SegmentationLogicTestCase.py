@@ -3,11 +3,11 @@ from unittest.mock import MagicMock
 import pytest
 import slicer
 
-from CMFSegmentatorLib import SegmentationLogic
-from .Utils import CMFTestCase, load_test_CT_volume
+from DentalSegmentatorLib import SegmentationLogic
+from .Utils import DentalSegmentatorTestCase, load_test_CT_volume
 
 
-class SegmentationLogicTestCase(CMFTestCase):
+class SegmentationLogicTestCase(DentalSegmentatorTestCase):
     def setUp(self):
         super().setUp()
         self.logic = SegmentationLogic()
@@ -23,7 +23,7 @@ class SegmentationLogicTestCase(CMFTestCase):
         self.logic.errorOccurred.connect(errorMock)
         self.logic.progressInfo.connect(infoMock)
 
-        self.logic.startCmfSegmentation(self.volume)
+        self.logic.startDentalSegmentation(self.volume)
         while not inferenceFinishedMock.called and not errorMock.called:
             slicer.app.processEvents()
 
@@ -31,6 +31,6 @@ class SegmentationLogicTestCase(CMFTestCase):
         infoMock.assert_called()
         errorMock.assert_not_called()
 
-        segmentation = self.logic.loadCmfSegmentation()
+        segmentation = self.logic.loadDentalSegmentation()
         self.assertIsNotNone(segmentation)
         self.assertEqual(segmentation.GetSegmentation().GetNumberOfSegments(), 5)

@@ -40,12 +40,11 @@ class PythonDependencyChecker:
             args = [
                 "install",
                 "torch>=2.0.0",
-                f"--pytorch-computation-backend=cu118"
             ]
             slicer.util._executePythonModule('light_the_torch', args)  # noqa
 
             progressDialog.labelText = "Installing nnunetv2"
             slicer.app.processEvents()
-            slicer.util.pip_install("nnunetv2==2.2.1")
+            slicer.util.pip_install("nnunetv2")
         finally:
             progressDialog.close()

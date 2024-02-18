@@ -15,16 +15,16 @@ class SegmentationLogicProtocol(Protocol):
     errorOccurred: Signal
     progressInfo: Signal
 
-    def startCmfSegmentation(self, volumeNode: "slicer.vtkMRMLScalarVolumeNode") -> None:
+    def startDentalSegmentation(self, volumeNode: "slicer.vtkMRMLScalarVolumeNode") -> None:
         pass
 
-    def stopCmfSegmentation(self):
+    def stopDentalSegmentation(self):
         pass
 
     def waitForSegmentationFinished(self):
         pass
 
-    def loadCmfSegmentation(self) -> "slicer.vtkMRMLSegmentationNode":
+    def loadDentalSegmentation(self) -> "slicer.vtkMRMLSegmentationNode":
         pass
 
 
@@ -39,7 +39,7 @@ class SegmentationLogic:
         assert mlResourcesDir.exists()
 
         # dir containing the result of the nnunet experiment (weight checkpoints, dataset.json, plans.json, ...)
-        self._nnunet_results_folder = mlResourcesDir.joinpath("CMFSegmentationModel")
+        self._nnunet_results_folder = mlResourcesDir.joinpath("SegmentationModel")
         assert self._nnunet_results_folder.exists()
 
         self._dataSetPath = next(self._nnunet_results_folder.rglob("dataset.json"))
@@ -53,7 +53,7 @@ class SegmentationLogic:
         self._tmpDir = qt.QTemporaryDir()
 
     def __del__(self):
-        self.stopCmfSegmentation()
+        self.stopDentalSegmentation()
 
     def onCheckStandardOutput(self):
         info = bytes(self.inferenceProcess.readAll().data()).decode()
@@ -66,19 +66,19 @@ class SegmentationLogic:
     def onFinished(self, *_):
         self.inferenceFinished()
 
-    def startCmfSegmentation(self, volumeNode: "slicer.vtkMRMLScalarVolumeNode") -> None:
+    def startDentalSegmentation(self, volumeNode: "slicer.vtkMRMLScalarVolumeNode") -> None:
         """Run the segmentation on a slicer volumeNode, get the result as a segmentationNode"""
         self._stopInferenceProcess()
         self._prepareInferenceDir(volumeNode)
         self._startInferenceProcess()
 
-    def stopCmfSegmentation(self):
+    def stopDentalSegmentation(self):
         self._stopInferenceProcess()
 
     def waitForSegmentationFinished(self):
         self.inferenceProcess.waitForFinished(-1)
 
-    def loadCmfSegmentation(self) -> "slicer.vtkMRMLSegmentationNode":
+    def loadDentalSegmentation(self) -> "slicer.vtkMRMLSegmentationNode":
         try:
             return slicer.util.loadSegmentation(self._outFile)
         except StopIteration:
