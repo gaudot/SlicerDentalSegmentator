@@ -1,7 +1,7 @@
-import datetime
 from enum import Flag, auto
 from typing import Optional
 
+import ctk
 import qt
 import slicer
 from slicer.util import VTKObservationMixin
@@ -53,6 +53,22 @@ class SegmentationWidget(qt.QWidget):
         self.segmentEditorWidget.setSourceVolumeNodeSelectorVisible(False)
         self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
         self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
+
+        # Find show 3D Button in widget
+        self.show3DButton = slicer.util.findChild(self.segmentEditorWidget, "Show3DButton")
+
+        # Create surface smoothing and connect it to show3D button surface smoothing
+        smoothingSlider = self.show3DButton.findChild("ctkSliderWidget")
+        self.surfaceSmoothingSlider = ctk.ctkSliderWidget(self)
+        self.surfaceSmoothingSlider.setToolTip(
+            "Higher value means stronger smoothing during closed surface representation conversion."
+        )
+        self.surfaceSmoothingSlider.decimals = 2
+        self.surfaceSmoothingSlider.maximum = 1
+        self.surfaceSmoothingSlider.singleStep = 0.1
+        self.surfaceSmoothingSlider.setValue(smoothingSlider.value)
+        self.surfaceSmoothingSlider.tracking = False
+        self.surfaceSmoothingSlider.valueChanged.connect(smoothingSlider.setValue)
 
         # Export Widget
         exportWidget = qt.QWidget()
@@ -109,8 +125,14 @@ class SegmentationWidget(qt.QWidget):
         layout.addWidget(self.applyWidget)
         layout.addWidget(self.stopWidget)
         layout.addWidget(self.segmentEditorWidget)
+
+        surfaceSmoothingLayout = qt.QFormLayout()
+        surfaceSmoothingLayout.setContentsMargins(0, 0, 0, 0)
+        surfaceSmoothingLayout.addRow("Surface smoothing :", self.surfaceSmoothingSlider)
+        layout.addLayout(surfaceSmoothingLayout)
         layout.addWidget(exportWidget)
         addInCollapsibleLayout(exportWidget, layout, "Export segmentation", isCollapsed=False)
+        layout.addStretch()
 
         self.logic.inferenceFinished.connect(self.onInferenceFinished)
         self.logic.errorOccurred.connect(self.onInferenceError)
@@ -195,6 +217,7 @@ class SegmentationWidget(qt.QWidget):
         segmentationNode.SetReferenceImageGeometryParameterFromVolumeNode(self.getCurrentVolumeNode())
         if not segmentationNode.GetDisplayNode():
             segmentationNode.CreateDefaultDisplayNodes()
+            slicer.app.processEvents()
 
         segmentationNode.SetDisplayVisibility(True)
 
@@ -212,12 +235,12 @@ class SegmentationWidget(qt.QWidget):
         self.applyWidget.setVisible(True)
 
         try:
-            self.onProgressInfo("Loading inference results...\n")
+            self.onProgressInfo("Loading inference results...")
             self._loadSegmentationResults()
-            self.onProgressInfo("Inference ended successfully.\n")
+            self.onProgressInfo("Inference ended successfully.")
         except RuntimeError as e:
             slicer.util.errorDisplay(e)
-            self.onProgressInfo(f"Error loading results {e}\n")
+            self.onProgressInfo(f"Error loading results :\n{e}")
 
     def _loadSegmentationResults(self):
         currentSegmentation = self.getCurrentSegmentationNode()
@@ -247,10 +270,11 @@ class SegmentationWidget(qt.QWidget):
         if not segmentationNode:
             return
 
+        self._initializeSegmentationNodeDisplay(segmentationNode)
         segmentation = segmentationNode.GetSegmentation()
         segmentIds = [segmentation.GetNthSegmentID(i) for i in range(segmentation.GetNumberOfSegments())]
 
-        labels = ["Maxilla / Upper Skull", "Mandible", "Upper Teeth", "Lower Teeth", "Mandibular canal"]
+        labels = ["Maxilla & Upper Skull", "Mandible", "Upper Teeth", "Lower Teeth", "Mandibular canal"]
         colors = [self.toRGBF(c) for c in ["#E3DD90", "#D4A1E6", "#DC9565", "#EBDFB4", "#D8654F"]]
         opacities = [0.45, 0.45, 1.0, 1.0, 1.0]
 
@@ -261,6 +285,9 @@ class SegmentationWidget(qt.QWidget):
             segment.SetColor(*color)
             segmentationDisplayNode.SetSegmentOpacity3D(segmentId, opacity)
 
+        self.show3DButton.setChecked(True)
+        slicer.util.resetThreeDViews()
+
     def onInferenceError(self, errorMsg):
         if self.isStopping:
             return
@@ -269,7 +296,7 @@ class SegmentationWidget(qt.QWidget):
 
     def onProgressInfo(self, infoMsg):
         infoMsg = self.removeImageIOError(infoMsg)
-        self.currentInfoTextEdit.insertPlainText(infoMsg)
+        self.currentInfoTextEdit.insertPlainText(infoMsg + "\n")
         self.moveTextEditToEnd(self.currentInfoTextEdit)
         self.insertDatedInfoLogs(infoMsg)
         slicer.app.processEvents()
@@ -279,11 +306,11 @@ class SegmentationWidget(qt.QWidget):
         """
         Filter out ImageIO error which comes from ITK and is of no interest to current processing.
         """
-        return "\n".join([msg for msg in infoMsg.split("\n") if "Error ImageIO factory" not in msg])
+        return "\n".join([msg for msg in infoMsg.strip().splitlines() if "Error ImageIO factory" not in msg])
 
     def insertDatedInfoLogs(self, infoMsg):
         now = qt.QDateTime.currentDateTime().toString("yyyy/MM/dd hh:mm:ss.zzz")
-        self.fullInfoLogs.extend([f"{now} :: {msgLine}" for msgLine in infoMsg.split("\n")])
+        self.fullInfoLogs.extend([f"{now} :: {msgLine}" for msgLine in infoMsg.splitlines()])
 
     def showInfoLogs(self):
         dialog = qt.QDialog()

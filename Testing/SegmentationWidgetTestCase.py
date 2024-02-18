@@ -81,7 +81,7 @@ class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
         node = self.widget.getCurrentSegmentationNode()
         self.assertIsNotNone(node)
 
-        exp_names = {"Maxilla / Upper Skull", "Mandible", "Upper Teeth", "Lower Teeth", "Mandibular canal"}
+        exp_names = {"Maxilla & Upper Skull", "Mandible", "Upper Teeth", "Lower Teeth", "Mandibular canal"}
         segmentation = node.GetSegmentation()
         segmentIds = [segmentation.GetNthSegmentID(i) for i in range(segmentation.GetNumberOfSegments())]
         segmentNames = {segmentation.GetSegment(segmentId).GetName() for segmentId in segmentIds}

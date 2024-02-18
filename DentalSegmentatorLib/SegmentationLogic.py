@@ -120,8 +120,7 @@ class SegmentationLogic:
             "-c", configuration,
             "-f", "0",
             "-step_size", step_size,
-            "-device", device,
-            "--verbose"
+            "-device", device
         ]
 
         if disable_tta:
