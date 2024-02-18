@@ -141,7 +141,7 @@ class SegmentationWidget(qt.QWidget):
 
         self.isStopping = False
 
-        self.dependencyChecker = PythonDependencyChecker()
+        self._dependencyChecker = PythonDependencyChecker()
 
     @staticmethod
     def _initSlicerDisplay():
@@ -163,16 +163,21 @@ class SegmentationWidget(qt.QWidget):
         self.logic.waitForSegmentationFinished()
         slicer.app.processEvents()
         self.isStopping = False
-
-        self.stopWidget.setVisible(False)
-        self.applyWidget.setVisible(True)
+        self._setApplyVisible(True)
 
     def onApplyClicked(self, *_):
-        self.dependencyChecker.downloadDependenciesIfNeeded()
+        self.currentInfoTextEdit.clear()
+        self._setApplyVisible(False)
+        self._dependencyChecker.downloadDependenciesIfNeeded(self.onProgressInfo, self.stopButton.clicked)
         self._runSegmentation()
 
+    def _setApplyVisible(self, isVisible):
+        self.applyWidget.setVisible(isVisible)
+        self.stopWidget.setVisible(not isVisible)
+
     def _runSegmentation(self):
-        if not self.dependencyChecker.areDependenciesSatisfied():
+        if not self._dependencyChecker.areDependenciesSatisfied():
+            self._setApplyVisible(True)
             return slicer.util.warningDisplay(
                 "Extension dependencies were not correctly installed."
                 "\nPlease check the logs and reinstall the dependencies before proceeding."
@@ -188,11 +193,9 @@ class SegmentationWidget(qt.QWidget):
                 "Would you like to proceed?"
             )
             if ret == qt.QMessageBox.No:
+                self._setApplyVisible(True)
                 return
 
-        self.applyWidget.setVisible(False)
-        self.stopWidget.setVisible(True)
-        self.currentInfoTextEdit.clear()
         slicer.app.processEvents()
         self.logic.startDentalSegmentation(self.getCurrentVolumeNode())
 
@@ -228,11 +231,9 @@ class SegmentationWidget(qt.QWidget):
         return self.segmentationNodeSelector.currentNode()
 
     def onInferenceFinished(self, *_):
+        self._setApplyVisible(True)
         if self.isStopping:
             return
-
-        self.stopWidget.setVisible(False)
-        self.applyWidget.setVisible(True)
 
         try:
             self.onProgressInfo("Loading inference results...")
@@ -261,7 +262,7 @@ class SegmentationWidget(qt.QWidget):
         slicer.mrmlScene.RemoveNode(segmentationNode)
 
     @staticmethod
-    def toRGBF(colorString):
+    def toRGB(colorString):
         color = qt.QColor(colorString)
         return color.redF(), color.greenF(), color.blueF()
 
@@ -275,7 +276,7 @@ class SegmentationWidget(qt.QWidget):
         segmentIds = [segmentation.GetNthSegmentID(i) for i in range(segmentation.GetNumberOfSegments())]
 
         labels = ["Maxilla & Upper Skull", "Mandible", "Upper Teeth", "Lower Teeth", "Mandibular canal"]
-        colors = [self.toRGBF(c) for c in ["#E3DD90", "#D4A1E6", "#DC9565", "#EBDFB4", "#D8654F"]]
+        colors = [self.toRGB(c) for c in ["#E3DD90", "#D4A1E6", "#DC9565", "#EBDFB4", "#D8654F"]]
         opacities = [0.45, 0.45, 1.0, 1.0, 1.0]
 
         segmentationDisplayNode = self.getCurrentSegmentationNode().GetDisplayNode()
