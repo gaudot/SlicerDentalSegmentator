@@ -38,3 +38,30 @@ def addInCollapsibleLayout(childWidget, parentLayout, collapsibleText, isCollaps
     collapsibleButtonLayout = qt.QVBoxLayout()
     collapsibleButtonLayout.addWidget(childWidget)
     collapsibleButton.setLayout(collapsibleButtonLayout)
+
+
+def set3DViewBackgroundColors(topColor, bottomColor):
+    """ Set the background color as a gradient between the top and bottom colors
+
+    :param topColor: (r, g, b) floats between 0 and 1
+    :param bottomColor: (r, g, b) floats between 0 and 1
+    """
+    import slicer
+    viewNode = slicer.app.layoutManager().threeDWidget(0).mrmlViewNode()
+    viewNode.SetBackgroundColor(bottomColor)
+    viewNode.SetBackgroundColor2(topColor)
+
+
+def setBoxAndTextVisibilityOnThreeDViews(isVisible):
+    import slicer
+    layoutManager = slicer.app.layoutManager()
+    for i in range(layoutManager.threeDViewCount):
+        threeDViewNode = layoutManager.threeDWidget(i).mrmlViewNode()
+        threeDViewNode.SetBoxVisible(isVisible)
+        threeDViewNode.SetAxisLabelsVisible(isVisible)
+
+
+def setConventionalWideScreenView():
+    import slicer
+    layoutManager = slicer.app.layoutManager()
+    layoutManager.setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutConventionalWidescreenView)

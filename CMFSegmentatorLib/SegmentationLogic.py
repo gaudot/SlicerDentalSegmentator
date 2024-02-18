@@ -27,9 +27,6 @@ class SegmentationLogicProtocol(Protocol):
     def loadCmfSegmentation(self) -> "slicer.vtkMRMLSegmentationNode":
         pass
 
-    def getSegmentationLabels(self) -> Dict[str, int]:
-        pass
-
 
 class SegmentationLogic:
     def __init__(self):
@@ -62,11 +59,6 @@ class SegmentationLogic:
         info = bytes(self.inferenceProcess.readAll().data()).decode()
         if info:
             self.progressInfo(info)
-
-    def getSegmentationLabels(self) -> Dict[str, int]:
-        with open(self._dataSetPath, "r") as f:
-            data = json.loads(f.read())
-            return data["labels"]
 
     def onErrorOccurred(self, *_):
         self.errorOccurred(bytes(self.inferenceProcess.readAllStandardError().data()).decode())

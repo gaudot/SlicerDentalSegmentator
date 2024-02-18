@@ -9,7 +9,8 @@ from slicer.util import VTKObservationMixin
 from .IconPath import icon, iconPath
 from .PythonDependencyChecker import PythonDependencyChecker
 from .SegmentationLogic import SegmentationLogic, SegmentationLogicProtocol
-from .Utils import createButton, addInCollapsibleLayout
+from .Utils import createButton, addInCollapsibleLayout, set3DViewBackgroundColors, setConventionalWideScreenView, \
+    setBoxAndTextVisibilityOnThreeDViews
 
 
 class ExportFormat(Flag):
@@ -22,6 +23,7 @@ class SegmentationWidget(qt.QWidget):
     def __init__(self, logic: Optional[SegmentationLogicProtocol] = None, parent=None):
         super().__init__(parent)
         self.logic = logic or SegmentationLogic()
+        self._initSlicerDisplay()
         self._prevSegmentationNode = None
 
         self.inputSelector = slicer.qMRMLNodeComboBox(self)
@@ -119,6 +121,12 @@ class SegmentationWidget(qt.QWidget):
 
         self.dependencyChecker = PythonDependencyChecker()
 
+    @staticmethod
+    def _initSlicerDisplay():
+        set3DViewBackgroundColors([1, 1, 1], [1, 1, 1])
+        setConventionalWideScreenView()
+        setBoxAndTextVisibilityOnThreeDViews(False)
+
     def _updateStopIcon(self):
         self.stopButton.setIcon(qt.QIcon(self.loading.currentPixmap()))
 
@@ -199,7 +207,7 @@ class SegmentationWidget(qt.QWidget):
         else:
             self.segmentationNodeSelector.setCurrentNode(segmentationNode)
         slicer.app.processEvents()
-        self._updateSegmentationLabels()
+        self._updateSegmentationDisplay()
 
     @staticmethod
     def _copySegmentationResultsToExistingNode(currentSegmentation, segmentationNode):
@@ -208,7 +216,12 @@ class SegmentationWidget(qt.QWidget):
         currentSegmentation.SetName(currentName)
         slicer.mrmlScene.RemoveNode(segmentationNode)
 
-    def _updateSegmentationLabels(self):
+    @staticmethod
+    def toRGBF(colorString):
+        color = qt.QColor(colorString)
+        return color.redF(), color.greenF(), color.blueF()
+
+    def _updateSegmentationDisplay(self):
         segmentationNode = self.getCurrentSegmentationNode()
         if not segmentationNode:
             return
@@ -216,14 +229,16 @@ class SegmentationWidget(qt.QWidget):
         segmentation = segmentationNode.GetSegmentation()
         segmentIds = [segmentation.GetNthSegmentID(i) for i in range(segmentation.GetNumberOfSegments())]
 
-        labels = [
-            k for k, v in
-            sorted(self.logic.getSegmentationLabels().items(), key=lambda x: x[1]) if
-            k != "background"
-        ]
+        labels = ["Maxilla / Upper Skull", "Mandible", "Upper Teeth", "Lower Teeth", "Mandibular canal"]
+        colors = [self.toRGBF(c) for c in ["#E3DD90", "#D4A1E6", "#DC9565", "#EBDFB4", "#D8654F"]]
+        opacities = [0.45, 0.45, 1.0, 1.0, 1.0]
 
-        for segmentId, label in zip(segmentIds, labels):
-            segmentation.GetSegment(segmentId).SetName(label)
+        segmentationDisplayNode = self.getCurrentSegmentationNode().GetDisplayNode()
+        for segmentId, label, color, opacity in zip(segmentIds, labels, colors, opacities):
+            segment = segmentation.GetSegment(segmentId)
+            segment.SetName(label)
+            segment.SetColor(*color)
+            segmentationDisplayNode.SetSegmentOpacity3D(segmentId, opacity)
 
     def onInferenceError(self, errorMsg):
         if self.isStopping:

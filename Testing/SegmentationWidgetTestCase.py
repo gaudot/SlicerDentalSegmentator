@@ -19,17 +19,6 @@ class MockLogic:
         self.loadCmfSegmentation = MagicMock()
         self.loadCmfSegmentation.side_effect = self.load_segmentation
 
-        self.getSegmentationLabels = MagicMock(
-            return_value={
-                "background": 0,
-                "Upper Skull": 1,
-                "Mandible": 2,
-                "Upper Teeth": 3,
-                "Lower Teeth": 4,
-                "Mandibular canal": 5
-            }
-        )
-
     @staticmethod
     def load_segmentation():
         return slicer.util.loadSegmentation(get_test_multi_label_path())
@@ -92,7 +81,7 @@ class SegmentationWidgetTestCase(CMFTestCase):
         node = self.widget.getCurrentSegmentationNode()
         self.assertIsNotNone(node)
 
-        exp_names = {"Upper Skull", "Mandible", "Upper Teeth", "Lower Teeth", "Mandibular canal"}
+        exp_names = {"Maxilla / Upper Skull", "Mandible", "Upper Teeth", "Lower Teeth", "Mandibular canal"}
         segmentation = node.GetSegmentation()
         segmentIds = [segmentation.GetNthSegmentID(i) for i in range(segmentation.GetNumberOfSegments())]
         segmentNames = {segmentation.GetSegment(segmentId).GetName() for segmentId in segmentIds}
