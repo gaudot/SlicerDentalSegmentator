@@ -50,6 +50,8 @@ class SegmentationLogic:
         self.inferenceProcess.errorOccurred.connect(self.onErrorOccurred)
         self.inferenceProcess.readyRead.connect(self.onCheckStandardOutput)
 
+        self._nnUNet_predict_path = None
+
         self._tmpDir = qt.QTemporaryDir()
 
     def __del__(self):
@@ -89,6 +91,28 @@ class SegmentationLogic:
             self.progressInfo("Stopping previous inference...\n")
             self.inferenceProcess.kill()
 
+    @property
+    def nnUNet_predict_path(self):
+        if self._nnUNet_predict_path is None:
+            self._nnUNet_predict_path = self._findUNetPredictPath()
+        return self._nnUNet_predict_path
+
+    @staticmethod
+    def _nnUNetPythonDir():
+        return Path(sys.executable).parent.joinpath("..", "lib", "Python")
+
+    @classmethod
+    def _findUNetPredictPath(cls):
+        # nnUNet install dir depends on OS. For Windows, install will be done in the Scripts dir.
+        # For Linux and MacOS, install will be done in the bin folder.
+        nnUNetPaths = ["Scripts", "bin"]
+        for path in nnUNetPaths:
+            predict_paths = list(sorted(cls._nnUNetPythonDir().joinpath(path).glob("nnUNetv2_predict*")))
+            if predict_paths:
+                return predict_paths[0].resolve()
+
+        return None
+
     def _startInferenceProcess(self, device='cuda', step_size=0.5, disable_tta=True):
         """ Run the nnU-Net V2 inference script
 
@@ -107,9 +131,12 @@ class SegmentationLogic:
         os.environ['nnUNet_raw'] = self._nnunet_results_folder.as_posix()
         os.environ['nnUNet_results'] = self._nnunet_results_folder.as_posix()
 
+        if not self.nnUNet_predict_path:
+            self.errorOccurred("Failed to find nnUNet predict path.")
+            return
+
         dataset_name = 'Dataset111_453CT'
         configuration = '3d_fullres'
-        python_scripts_dir = Path(os.path.dirname(sys.executable)).joinpath("..", "lib", "Python", "Scripts")
         device = device if torch.cuda.is_available() else "cpu"
 
         # Construct the command for the nnunnet inference script
@@ -127,8 +154,7 @@ class SegmentationLogic:
             args.append("--disable_tta")
 
         self.progressInfo("nnUNet preprocessing...\n")
-        program = next(python_scripts_dir.glob("nnUNetv2_predict*")).resolve()
-        self.inferenceProcess.start(program, args, qt.QProcess.Unbuffered | qt.QProcess.ReadWrite)
+        self.inferenceProcess.start(self.nnUNet_predict_path, args, qt.QProcess.Unbuffered | qt.QProcess.ReadOnly)
 
     @property
     def _outFile(self) -> str:
@@ -140,7 +166,7 @@ class SegmentationLogic:
         self._inDir.mkdir(parents=True)
 
         # Name of the volume should match expected nnUNet conventions
-        self.progressInfo("Transferring volume to nnUNet...\n")
+        self.progressInfo(f"Transferring volume to nnUNet in {self._tmpDir.path()}\n")
         volumePath = self._inDir.joinpath("volume_0000.nii.gz")
         assert slicer.util.exportNode(volumeNode, volumePath)
         assert volumePath.exists(), "Failed to export volume for segmentation."

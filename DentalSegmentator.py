@@ -15,8 +15,8 @@ class DentalSegmentator(ScriptedLoadableModule):
         self.parent.contributors = []
 
         self.parent.helpText = tr(
-            "This module provides an AI segmentation tool for cranio-maxillofacial "
-            "CT scans based on a nnUNet model.")
+            "This module provides an AI segmentation tool for Dental "
+            "CT and CBCT scans based on a nnUNet model.")
         self.parent.acknowledgementText = tr(
             "This file was originally developed for the "
             '<a href="https://orthodontie-ffo.org/">Fédération Française d\'Orthodonthie</a> '

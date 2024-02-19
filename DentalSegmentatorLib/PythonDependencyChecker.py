@@ -31,6 +31,7 @@ class PythonDependencyChecker:
         proc.readyRead.connect(onRead)
         stopSignal.connect(proc.kill)
         proc.start(sys.executable, args, qt.QProcess.Unbuffered | qt.QProcess.ReadWrite)
+        proc.waitForStarted()
         while proc.state() == proc.Running:
             slicer.app.processEvents(1000)
 

@@ -293,6 +293,7 @@ class SegmentationWidget(qt.QWidget):
         if self.isStopping:
             return
 
+        self._setApplyVisible(True)
         slicer.util.errorDisplay("Encountered error during inference :\n" + errorMsg)
 
     def onProgressInfo(self, infoMsg):
