@@ -1,7 +1,9 @@
 from enum import Flag, auto
 from typing import Optional
 
+import SegmentEditorEffects
 import ctk
+import numpy as np
 import qt
 import slicer
 from slicer.util import VTKObservationMixin
@@ -25,6 +27,7 @@ class SegmentationWidget(qt.QWidget):
         self.logic = logic or SegmentationLogic()
         self._initSlicerDisplay()
         self._prevSegmentationNode = None
+        self._minimumIslandSize_mm3 = 60
 
         self.inputSelector = slicer.qMRMLNodeComboBox(self)
         self.inputSelector.nodeTypes = ["vtkMRMLScalarVolumeNode"]
@@ -146,6 +149,9 @@ class SegmentationWidget(qt.QWidget):
 
     @staticmethod
     def _initSlicerDisplay():
+        """
+        Initialize 3D Slicer's display with white background and no 3D Cube / labels.
+        """
         set3DViewBackgroundColors([1, 1, 1], [1, 1, 1])
         setConventionalWideScreenView()
         setBoxAndTextVisibilityOnThreeDViews(False)
@@ -167,18 +173,29 @@ class SegmentationWidget(qt.QWidget):
         self._setApplyVisible(True)
 
     def onApplyClicked(self, *_):
+        """
+        On apply, clear the output log infos, hide apply button, install dependencies and start the segmentation process
+        """
         self.currentInfoTextEdit.clear()
         self._setApplyVisible(False)
         self._dependencyChecker.downloadDependenciesIfNeeded(self.onProgressInfo, self.stopButton.clicked)
         self._runSegmentation()
 
     def _setApplyVisible(self, isVisible):
+        """
+        Toggles visibility of the apply / stop buttons and make sure the selectors are disabled when running
+        segmentation.
+        """
         self.applyWidget.setVisible(isVisible)
         self.stopWidget.setVisible(not isVisible)
         self.inputSelector.setEnabled(isVisible)
         self.segmentationNodeSelector.setEnabled(isVisible)
 
     def _runSegmentation(self):
+        """
+        Make sure the dependencies are available and user is aware CPU process may take time if current install doesn't
+        support CUDA before starting the actual segmentation from the logic object.
+        """
         if not self._dependencyChecker.areDependenciesSatisfied():
             self._setApplyVisible(True)
             return slicer.util.warningDisplay(
@@ -203,6 +220,9 @@ class SegmentationWidget(qt.QWidget):
         self.logic.startDentalSegmentation(self.getCurrentVolumeNode())
 
     def onInputChanged(self, *_):
+        """
+        When changing the input, update the apply button enable status and restore previous segmentation if any.
+        """
         volumeNode = self.getCurrentVolumeNode()
         self.applyButton.setEnabled(volumeNode is not None)
         slicer.util.setSliceViewerLayers(background=volumeNode)
@@ -210,16 +230,26 @@ class SegmentationWidget(qt.QWidget):
         self._restoreProcessedSegmentation()
 
     def _restoreProcessedSegmentation(self):
+        """
+        Restore the previous segmentation based on the currently selected volume node.
+        """
         segmentationNode = self.processedVolumes.get(self.getCurrentVolumeNode())
         self.segmentationNodeSelector.setCurrentNode(segmentationNode)
 
     def _storeProcessedSegmentation(self):
+        """
+        Save the pair volumeNode / SegmentationNode for future input selector changes.
+        """
         volumeNode = self.getCurrentVolumeNode()
         segmentationNode = self.getCurrentSegmentationNode()
         if volumeNode and segmentationNode:
             self.processedVolumes[volumeNode] = segmentationNode
 
     def updateSegmentEditorWidget(self, *_):
+        """
+        Update the segment editor status based on the current selected segmentation node.
+        Hide previous segmentation node to make visualization smoother.
+        """
         if self._prevSegmentationNode:
             self._prevSegmentationNode.SetDisplayVisibility(False)
 
@@ -230,6 +260,10 @@ class SegmentationWidget(qt.QWidget):
         self.segmentEditorWidget.setSourceVolumeNode(self.getCurrentVolumeNode())
 
     def _initializeSegmentationNodeDisplay(self, segmentationNode):
+        """
+        Make sure the current segmentation node has a display node and points to the current volume node.
+        Reset the 3D view to default and make sure the segmentation node is visible.
+        """
         if not segmentationNode:
             return
 
@@ -253,8 +287,11 @@ class SegmentationWidget(qt.QWidget):
         return self.segmentationNodeSelector.currentNode()
 
     def onInferenceFinished(self, *_):
-        self._setApplyVisible(True)
+        """
+        Restore apply button visibility, load the segmentation results if the inference was not manually stopped.
+        """
         if self.isStopping:
+            self._setApplyVisible(True)
             return
 
         try:
@@ -264,8 +301,14 @@ class SegmentationWidget(qt.QWidget):
         except RuntimeError as e:
             slicer.util.errorDisplay(e)
             self.onProgressInfo(f"Error loading results :\n{e}")
+        finally:
+            self._setApplyVisible(True)
 
     def _loadSegmentationResults(self):
+        """
+        Load the segmentation results from the logic segmentation folder. Update the segmentation display names and
+        run some simple post-processing on the segmentation.
+        """
         currentSegmentation = self.getCurrentSegmentationNode()
         segmentationNode = self.logic.loadDentalSegmentation()
         segmentationNode.SetName(self.getCurrentVolumeNode().GetName() + "_Segmentation")
@@ -275,10 +318,15 @@ class SegmentationWidget(qt.QWidget):
             self.segmentationNodeSelector.setCurrentNode(segmentationNode)
         slicer.app.processEvents()
         self._updateSegmentationDisplay()
+        self._postProcessSegments()
         self._storeProcessedSegmentation()
 
     @staticmethod
     def _copySegmentationResultsToExistingNode(currentSegmentation, segmentationNode):
+        """
+        Copy the segmentation results from segmentationNode to currentSegmentationNode and remove segmentationNode from
+        scene.
+        """
         currentName = currentSegmentation.GetName()
         currentSegmentation.Copy(segmentationNode)
         currentSegmentation.SetName(currentName)
@@ -290,6 +338,10 @@ class SegmentationWidget(qt.QWidget):
         return color.redF(), color.greenF(), color.blueF()
 
     def _updateSegmentationDisplay(self):
+        """
+        Update the segmentation node display by updating its names, colors, opacities and making sure 3D display is
+        activated.
+        """
         segmentationNode = self.getCurrentSegmentationNode()
         if not segmentationNode:
             return
@@ -314,7 +366,58 @@ class SegmentationWidget(qt.QWidget):
         self.show3DButton.setChecked(True)
         slicer.util.resetThreeDViews()
 
+    def _postProcessSegments(self):
+        """
+        Runs Island keep largest, and remove small islands on Maxilla, upper and lower teeth.
+        """
+
+        self.onProgressInfo("Post processing results...")
+        self._keepLargestIsland("Segment_1")
+        self._removeSmallIsland("Segment_3")
+        self._removeSmallIsland("Segment_4")
+        self.onProgressInfo("Post processing done.")
+
+    def _keepLargestIsland(self, segmentId):
+        """
+        Keeps largest voxel islands for input segmentId.
+        """
+        segment = self._getSegment(segmentId)
+        if not segment:
+            return
+
+        self.onProgressInfo(f"Keep largest region for {segment.GetName()}...")
+        self.segmentEditorWidget.setCurrentSegmentID(segmentId)
+        effect = self.segmentEditorWidget.effectByName("Islands")
+        effect.setParameter("Operation", SegmentEditorEffects.KEEP_LARGEST_ISLAND)
+        effect.self().onApply()
+
+    def _removeSmallIsland(self, segmentId):
+        """
+        Removes small islands for input segmentId.
+        """
+        segment = self._getSegment(segmentId)
+        if not segment:
+            return
+
+        self.onProgressInfo(f"Remove small voxels for {segment.GetName()}...")
+        self.segmentEditorWidget.setCurrentSegmentID(segmentId)
+        voxelSize_mm3 = np.cumprod(self.getCurrentVolumeNode().GetSpacing())[-1]
+        minimumIslandSize = int(np.ceil(self._minimumIslandSize_mm3 / voxelSize_mm3))
+        effect = self.segmentEditorWidget.effectByName("Islands")
+        effect.setParameter("Operation", SegmentEditorEffects.REMOVE_SMALL_ISLANDS)
+        effect.setParameter("MinimumSize", minimumIslandSize)
+        effect.self().onApply()
+
+    def _getSegment(self, segmentId):
+        segmentationNode = self.getCurrentSegmentationNode()
+        if not segmentationNode:
+            return
+        return segmentationNode.GetSegmentation().GetSegment(segmentId)
+
     def onInferenceError(self, errorMsg):
+        """
+        Displays error message in case of inference errors if inference was not manually stopped.
+        """
         if self.isStopping:
             return
 
@@ -322,6 +425,9 @@ class SegmentationWidget(qt.QWidget):
         slicer.util.errorDisplay("Encountered error during inference :\n" + errorMsg)
 
     def onProgressInfo(self, infoMsg):
+        """
+        Prints progress information in module log console and in separate log dialog.
+        """
         infoMsg = self.removeImageIOError(infoMsg)
         self.currentInfoTextEdit.insertPlainText(infoMsg + "\n")
         self.moveTextEditToEnd(self.currentInfoTextEdit)
@@ -340,6 +446,9 @@ class SegmentationWidget(qt.QWidget):
         self.fullInfoLogs.extend([f"{now} :: {msgLine}" for msgLine in infoMsg.splitlines()])
 
     def showInfoLogs(self):
+        """
+        Displays all logs from previous runs in a separate dialog.
+        """
         dialog = qt.QDialog()
         layout = qt.QVBoxLayout(dialog)
 
