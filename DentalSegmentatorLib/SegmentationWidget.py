@@ -28,7 +28,6 @@ class SegmentationWidget(qt.QWidget):
 
         self.inputSelector = slicer.qMRMLNodeComboBox(self)
         self.inputSelector.nodeTypes = ["vtkMRMLScalarVolumeNode"]
-        self.inputSelector.selectNodeUponCreation = False
         self.inputSelector.addEnabled = False
         self.inputSelector.showHidden = False
         self.inputSelector.removeEnabled = False
@@ -38,7 +37,7 @@ class SegmentationWidget(qt.QWidget):
         # Configure segment editor
         self.segmentationNodeSelector = slicer.qMRMLNodeComboBox(self)
         self.segmentationNodeSelector.nodeTypes = ["vtkMRMLSegmentationNode"]
-        self.segmentationNodeSelector.selectNodeUponCreation = False
+        self.segmentationNodeSelector.selectNodeUponCreation = True
         self.segmentationNodeSelector.addEnabled = True
         self.segmentationNodeSelector.removeEnabled = True
         self.segmentationNodeSelector.showHidden = False
@@ -137,11 +136,13 @@ class SegmentationWidget(qt.QWidget):
         self.logic.inferenceFinished.connect(self.onInferenceFinished)
         self.logic.errorOccurred.connect(self.onInferenceError)
         self.logic.progressInfo.connect(self.onProgressInfo)
-        self.onInputChanged()
-
         self.isStopping = False
 
         self._dependencyChecker = PythonDependencyChecker()
+        self.processedVolumes = {}
+
+        self.onInputChanged()
+        self.updateSegmentEditorWidget()
 
     @staticmethod
     def _initSlicerDisplay():
@@ -174,6 +175,8 @@ class SegmentationWidget(qt.QWidget):
     def _setApplyVisible(self, isVisible):
         self.applyWidget.setVisible(isVisible)
         self.stopWidget.setVisible(not isVisible)
+        self.inputSelector.setEnabled(isVisible)
+        self.segmentationNodeSelector.setEnabled(isVisible)
 
     def _runSegmentation(self):
         if not self._dependencyChecker.areDependenciesSatisfied():
@@ -200,8 +203,21 @@ class SegmentationWidget(qt.QWidget):
         self.logic.startDentalSegmentation(self.getCurrentVolumeNode())
 
     def onInputChanged(self, *_):
-        self.applyButton.setEnabled(self.getCurrentVolumeNode() is not None)
-        self.updateSegmentEditorWidget()
+        volumeNode = self.getCurrentVolumeNode()
+        self.applyButton.setEnabled(volumeNode is not None)
+        slicer.util.setSliceViewerLayers(background=volumeNode)
+        slicer.util.resetSliceViews()
+        self._restoreProcessedSegmentation()
+
+    def _restoreProcessedSegmentation(self):
+        segmentationNode = self.processedVolumes.get(self.getCurrentVolumeNode())
+        self.segmentationNodeSelector.setCurrentNode(segmentationNode)
+
+    def _storeProcessedSegmentation(self):
+        volumeNode = self.getCurrentVolumeNode()
+        segmentationNode = self.getCurrentSegmentationNode()
+        if volumeNode and segmentationNode:
+            self.processedVolumes[volumeNode] = segmentationNode
 
     def updateSegmentEditorWidget(self, *_):
         if self._prevSegmentationNode:
@@ -223,6 +239,12 @@ class SegmentationWidget(qt.QWidget):
             slicer.app.processEvents()
 
         segmentationNode.SetDisplayVisibility(True)
+
+        # Reset 3D view to fit current segmentation
+        layoutManager = slicer.app.layoutManager()
+        threeDWidget = layoutManager.threeDWidget(0)
+        threeDWidget.threeDView().rotateToViewAxis(3)
+        slicer.util.resetThreeDViews()
 
     def getCurrentVolumeNode(self):
         return self.inputSelector.currentNode()
@@ -253,6 +275,7 @@ class SegmentationWidget(qt.QWidget):
             self.segmentationNodeSelector.setCurrentNode(segmentationNode)
         slicer.app.processEvents()
         self._updateSegmentationDisplay()
+        self._storeProcessedSegmentation()
 
     @staticmethod
     def _copySegmentationResultsToExistingNode(currentSegmentation, segmentationNode):
@@ -276,7 +299,7 @@ class SegmentationWidget(qt.QWidget):
         labels = ["Maxilla & Upper Skull", "Mandible", "Upper Teeth", "Lower Teeth", "Mandibular canal"]
         colors = [self.toRGB(c) for c in ["#E3DD90", "#D4A1E6", "#DC9565", "#EBDFB4", "#D8654F"]]
         opacities = [0.45, 0.45, 1.0, 1.0, 1.0]
-        segmentIds = [f"Segment_{i+1}" for i in range(len(labels))]
+        segmentIds = [f"Segment_{i + 1}" for i in range(len(labels))]
 
         segmentationDisplayNode = self.getCurrentSegmentationNode().GetDisplayNode()
         for segmentId, label, color, opacity in zip(segmentIds, labels, colors, opacities):

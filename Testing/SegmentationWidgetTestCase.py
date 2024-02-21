@@ -3,6 +3,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock
 
 import slicer
+import SampleData
 
 from DentalSegmentatorLib import SegmentationWidget, Signal, ExportFormat
 from .Utils import DentalSegmentatorTestCase, get_test_multi_label_path, get_test_multi_label_path_with_segments_1_3_5
@@ -30,7 +31,6 @@ class MockLogic:
 
 class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
     def setUp(self):
-        import SampleData
         super().setUp()
         self.logic = MockLogic()
         self.node = SampleData.SampleDataLogic().downloadMRHead()
@@ -46,11 +46,15 @@ class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
     def test_can_run_segmentation(self):
         slicer.app.processEvents()
         self.assertTrue(self.widget.applyButton.isEnabled())
+        self.assertTrue(self.widget.inputSelector.isEnabled())
+        self.assertTrue(self.widget.segmentationNodeSelector.isEnabled())
         self.assertFalse(self.widget.stopButton.isVisible())
 
         self.widget.applyButton.click()
         slicer.app.processEvents()
         self.assertFalse(self.widget.applyButton.isVisible())
+        self.assertFalse(self.widget.inputSelector.isEnabled())
+        self.assertFalse(self.widget.segmentationNodeSelector.isEnabled())
         self.assertTrue(self.widget.stopButton.isVisible())
 
         self.logic.startDentalSegmentation.assert_called_once_with(self.node)
@@ -58,6 +62,8 @@ class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
         slicer.app.processEvents()
 
         self.assertTrue(self.widget.applyButton.isVisible())
+        self.assertTrue(self.widget.inputSelector.isEnabled())
+        self.assertTrue(self.widget.segmentationNodeSelector.isEnabled())
         self.assertFalse(self.widget.stopButton.isVisible())
         self.logic.loadDentalSegmentation.assert_called_once()
 
@@ -124,3 +130,34 @@ class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
             self.assertEqual(len(list(tmpPath.glob("*.stl"))), 5)
             self.assertEqual(len(list(tmpPath.glob("*.obj"))), 1)
             self.assertEqual(len(list(tmpPath.glob("*.nii.gz"))), 1)
+
+    def test_synchronises_segmentation_selector_to_processed_volume(self):
+        self.assertIsNone(self.widget.getCurrentSegmentationNode())
+        self.logic.inferenceFinished()
+        slicer.app.processEvents()
+        self.assertIsNotNone(self.widget.getCurrentSegmentationNode())
+
+        otherNode = SampleData.SampleDataLogic().downloadMRHead()
+        self.widget.inputSelector.setCurrentNode(otherNode)
+        self.assertIsNone(self.widget.getCurrentSegmentationNode())
+
+        self.widget.inputSelector.setCurrentNode(self.node)
+        self.assertIsNotNone(self.widget.getCurrentSegmentationNode())
+
+    def test_handles_deleted_segmentations(self):
+        self.logic.inferenceFinished()
+        slicer.app.processEvents()
+
+        otherNode = SampleData.SampleDataLogic().downloadMRHead()
+        self.widget.inputSelector.setCurrentNode(otherNode)
+        slicer.app.processEvents()
+
+        self.widget.inputSelector.setCurrentNode(self.node)
+        slicer.app.processEvents()
+        slicer.mrmlScene.RemoveNode(self.widget.getCurrentSegmentationNode())
+
+        self.widget.inputSelector.setCurrentNode(otherNode)
+        slicer.app.processEvents()
+        self.widget.inputSelector.setCurrentNode(self.node)
+        slicer.app.processEvents()
+        self.assertIsNone(self.widget.getCurrentSegmentationNode())
