@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import slicer
 
 from DentalSegmentatorLib import SegmentationWidget, Signal, ExportFormat
-from .Utils import DentalSegmentatorTestCase, get_test_multi_label_path
+from .Utils import DentalSegmentatorTestCase, get_test_multi_label_path, get_test_multi_label_path_with_segments_1_3_5
 
 
 class MockLogic:
@@ -22,6 +22,10 @@ class MockLogic:
     @staticmethod
     def load_segmentation():
         return slicer.util.loadSegmentation(get_test_multi_label_path())
+
+    @staticmethod
+    def load_segmentation_partial():
+        return slicer.util.loadSegmentation(get_test_multi_label_path_with_segments_1_3_5())
 
 
 class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
@@ -82,6 +86,19 @@ class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
         self.assertIsNotNone(node)
 
         exp_names = {"Maxilla & Upper Skull", "Mandible", "Upper Teeth", "Lower Teeth", "Mandibular canal"}
+        segmentation = node.GetSegmentation()
+        segmentIds = [segmentation.GetNthSegmentID(i) for i in range(segmentation.GetNumberOfSegments())]
+        segmentNames = {segmentation.GetSegment(segmentId).GetName() for segmentId in segmentIds}
+        self.assertEqual(segmentNames, exp_names)
+
+    def test_loading_sets_correct_names_when_segmentation_has_missing_segments(self):
+        self.logic.loadDentalSegmentation.side_effect = self.logic.load_segmentation_partial
+        self.logic.inferenceFinished()
+        slicer.app.processEvents()
+        node = self.widget.getCurrentSegmentationNode()
+        self.assertIsNotNone(node)
+
+        exp_names = {"Maxilla & Upper Skull", "Upper Teeth", "Mandibular canal"}
         segmentation = node.GetSegmentation()
         segmentIds = [segmentation.GetNthSegmentID(i) for i in range(segmentation.GetNumberOfSegments())]
         segmentNames = {segmentation.GetSegment(segmentId).GetName() for segmentId in segmentIds}

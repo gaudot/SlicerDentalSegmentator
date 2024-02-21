@@ -273,15 +273,17 @@ class SegmentationWidget(qt.QWidget):
 
         self._initializeSegmentationNodeDisplay(segmentationNode)
         segmentation = segmentationNode.GetSegmentation()
-        segmentIds = [segmentation.GetNthSegmentID(i) for i in range(segmentation.GetNumberOfSegments())]
-
         labels = ["Maxilla & Upper Skull", "Mandible", "Upper Teeth", "Lower Teeth", "Mandibular canal"]
         colors = [self.toRGB(c) for c in ["#E3DD90", "#D4A1E6", "#DC9565", "#EBDFB4", "#D8654F"]]
         opacities = [0.45, 0.45, 1.0, 1.0, 1.0]
+        segmentIds = [f"Segment_{i+1}" for i in range(len(labels))]
 
         segmentationDisplayNode = self.getCurrentSegmentationNode().GetDisplayNode()
         for segmentId, label, color, opacity in zip(segmentIds, labels, colors, opacities):
             segment = segmentation.GetSegment(segmentId)
+            if segment is None:
+                continue
+
             segment.SetName(label)
             segment.SetColor(*color)
             segmentationDisplayNode.SetSegmentOpacity3D(segmentId, opacity)
