@@ -325,6 +325,7 @@ class SegmentationWidget(qt.QWidget):
         self.moveTextEditToEnd(textEdit)
         layout.addWidget(textEdit)
         dialog.setWindowFlags(qt.Qt.WindowCloseButtonHint)
+        dialog.resize(slicer.util.mainWindow().size * .7)
         dialog.exec()
 
     @staticmethod
