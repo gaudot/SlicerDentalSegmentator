@@ -12,15 +12,21 @@ class DentalSegmentator(ScriptedLoadableModule):
         self.parent.title = tr("DentalSegmentator")
         self.parent.categories = [translate("qSlicerAbstractCoreModule", "Segmentation")]
         self.parent.dependencies = []
-        self.parent.contributors = []
+        self.parent.contributors = [
+            "Gauthier DOT (AP-HP)",
+            "Laurent GAJNY (ENSAM)",
+            "Roman FENIOUX (KITWARE SAS)",
+            "Thibault PELLETIER (KITWARE SAS)"
+        ]
 
         self.parent.helpText = tr(
-            "This module provides an AI segmentation tool for Dental "
-            "CT and CBCT scans based on a nnUNet model.")
+            "Fully automatic AI segmentation tool for Dental CT and CBCT scans based on DentalSegmentator nnU-Net "
+            "model."
+        )
         self.parent.acknowledgementText = tr(
-            "This file was originally developed for the "
-            '<a href="https://orthodontie-ffo.org/">Fédération Française d\'Orthodonthie</a> '
-            "(FFO) for the analysis of cranio-maxillofacial data"
+            "This module was originally developed for the "
+            '<a href="https://orthodontie-ffo.org/">Fédération Française d\'Orthodontie</a> '
+            "(FFO) for the analysis of dento-maxillo-facial data."
         )
 
 
