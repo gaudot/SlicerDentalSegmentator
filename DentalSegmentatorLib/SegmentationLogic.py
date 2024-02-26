@@ -1,6 +1,7 @@
 import os
 import sys
 from pathlib import Path
+from typing import Protocol
 
 import qt
 import slicer
@@ -8,28 +9,57 @@ import slicer
 from .Signal import Signal
 
 
+class SegmentationLogicProtocol(Protocol):
+    inferenceFinished: Signal
+    errorOccurred: Signal
+    progressInfo: Signal
+
+    def startDentalSegmentation(self, volumeNode: "slicer.vtkMRMLScalarVolumeNode") -> None:
+        pass
+
+    def stopDentalSegmentation(self):
+        pass
+
+    def waitForSegmentationFinished(self):
+        pass
+
+    def loadDentalSegmentation(self) -> "slicer.vtkMRMLSegmentationNode":
+        pass
+
+
 class SegmentationLogic:
     def __init__(self):
         self.inferenceFinished = Signal()
         self.errorOccurred = Signal("str")
+        self.progressInfo = Signal("str")
 
         fileDir = Path(__file__).parent
         mlResourcesDir = fileDir.joinpath("..", "Resources", "ML").resolve()
         assert mlResourcesDir.exists()
 
         # dir containing the result of the nnunet experiment (weight checkpoints, dataset.json, plans.json, ...)
-        self._nnunet_results_folder = mlResourcesDir.joinpath("CMFSegmentationModel")
+        self._nnunet_results_folder = mlResourcesDir.joinpath("SegmentationModel")
         assert self._nnunet_results_folder.exists()
 
+        self._dataSetPath = next(self._nnunet_results_folder.rglob("dataset.json"))
+
         self.inferenceProcess = qt.QProcess()
-        self.inferenceProcess.setProcessChannelMode(qt.QProcess.ForwardedChannels)
+        self.inferenceProcess.setProcessChannelMode(qt.QProcess.MergedChannels)
         self.inferenceProcess.finished.connect(self.onFinished)
         self.inferenceProcess.errorOccurred.connect(self.onErrorOccurred)
+        self.inferenceProcess.readyRead.connect(self.onCheckStandardOutput)
+
+        self._nnUNet_predict_path = None
 
         self._tmpDir = qt.QTemporaryDir()
 
     def __del__(self):
-        self.stopCmfSegmentation()
+        self.stopDentalSegmentation()
+
+    def onCheckStandardOutput(self):
+        info = bytes(self.inferenceProcess.readAll().data()).decode()
+        if info:
+            self.progressInfo(info)
 
     def onErrorOccurred(self, *_):
         self.errorOccurred(bytes(self.inferenceProcess.readAllStandardError().data()).decode())
@@ -37,19 +67,19 @@ class SegmentationLogic:
     def onFinished(self, *_):
         self.inferenceFinished()
 
-    def startCmfSegmentation(self, volumeNode: "slicer.vtkMRMLScalarVolumeNode") -> None:
+    def startDentalSegmentation(self, volumeNode: "slicer.vtkMRMLScalarVolumeNode") -> None:
         """Run the segmentation on a slicer volumeNode, get the result as a segmentationNode"""
         self._stopInferenceProcess()
         self._prepareInferenceDir(volumeNode)
         self._startInferenceProcess()
 
-    def stopCmfSegmentation(self):
+    def stopDentalSegmentation(self):
         self._stopInferenceProcess()
 
     def waitForSegmentationFinished(self):
         self.inferenceProcess.waitForFinished(-1)
 
-    def loadCmfSegmentation(self):
+    def loadDentalSegmentation(self) -> "slicer.vtkMRMLSegmentationNode":
         try:
             return slicer.util.loadSegmentation(self._outFile)
         except StopIteration:
@@ -57,7 +87,30 @@ class SegmentationLogic:
 
     def _stopInferenceProcess(self):
         if self.inferenceProcess.state() == self.inferenceProcess.Running:
+            self.progressInfo("Stopping previous inference...\n")
             self.inferenceProcess.kill()
+
+    @property
+    def nnUNet_predict_path(self):
+        if self._nnUNet_predict_path is None:
+            self._nnUNet_predict_path = self._findUNetPredictPath()
+        return self._nnUNet_predict_path
+
+    @staticmethod
+    def _nnUNetPythonDir():
+        return Path(sys.executable).parent.joinpath("..", "lib", "Python")
+
+    @classmethod
+    def _findUNetPredictPath(cls):
+        # nnUNet install dir depends on OS. For Windows, install will be done in the Scripts dir.
+        # For Linux and MacOS, install will be done in the bin folder.
+        nnUNetPaths = ["Scripts", "bin"]
+        for path in nnUNetPaths:
+            predict_paths = list(sorted(cls._nnUNetPythonDir().joinpath(path).glob("nnUNetv2_predict*")))
+            if predict_paths:
+                return predict_paths[0].resolve()
+
+        return None
 
     def _startInferenceProcess(self, device='cuda', step_size=0.5, disable_tta=True):
         """ Run the nnU-Net V2 inference script
@@ -77,9 +130,12 @@ class SegmentationLogic:
         os.environ['nnUNet_raw'] = self._nnunet_results_folder.as_posix()
         os.environ['nnUNet_results'] = self._nnunet_results_folder.as_posix()
 
+        if not self.nnUNet_predict_path:
+            self.errorOccurred("Failed to find nnUNet predict path.")
+            return
+
         dataset_name = 'Dataset111_453CT'
         configuration = '3d_fullres'
-        python_scripts_dir = Path(os.path.dirname(sys.executable)).joinpath("..", "lib", "Python", "Scripts")
         device = device if torch.cuda.is_available() else "cpu"
 
         # Construct the command for the nnunnet inference script
@@ -96,8 +152,8 @@ class SegmentationLogic:
         if disable_tta:
             args.append("--disable_tta")
 
-        program = next(python_scripts_dir.glob("nnUNetv2_predict*")).resolve()
-        self.inferenceProcess.start(program, args)
+        self.progressInfo("nnUNet preprocessing...\n")
+        self.inferenceProcess.start(self.nnUNet_predict_path, args, qt.QProcess.Unbuffered | qt.QProcess.ReadOnly)
 
     @property
     def _outFile(self) -> str:
@@ -109,6 +165,7 @@ class SegmentationLogic:
         self._inDir.mkdir(parents=True)
 
         # Name of the volume should match expected nnUNet conventions
+        self.progressInfo(f"Transferring volume to nnUNet in {self._tmpDir.path()}\n")
         volumePath = self._inDir.joinpath("volume_0000.nii.gz")
         assert slicer.util.exportNode(volumeNode, volumePath)
         assert volumePath.exists(), "Failed to export volume for segmentation."

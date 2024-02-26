@@ -4,7 +4,7 @@ from pathlib import Path
 import slicer
 
 
-class CMFTestCase(unittest.TestCase):
+class DentalSegmentatorTestCase(unittest.TestCase):
     def setUp(self):
         self._clearScene()
 
@@ -28,3 +28,7 @@ def load_test_CT_volume():
 
 def get_test_multi_label_path():
     return _dataFolderPath().joinpath("Patient_020.nii.gz").as_posix()
+
+
+def get_test_multi_label_path_with_segments_1_3_5():
+    return _dataFolderPath().joinpath("Patient_020_segment_1_3_5.nii.gz").as_posix()
