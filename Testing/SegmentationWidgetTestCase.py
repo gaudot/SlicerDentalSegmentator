@@ -2,8 +2,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock
 
-import slicer
 import SampleData
+import slicer
 
 from DentalSegmentatorLib import SegmentationWidget, Signal, ExportFormat
 from .Utils import DentalSegmentatorTestCase, get_test_multi_label_path, get_test_multi_label_path_with_segments_1_3_5
@@ -161,3 +161,23 @@ class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
         self.widget.inputSelector.setCurrentNode(self.node)
         slicer.app.processEvents()
         self.assertIsNone(self.widget.getCurrentSegmentationNode())
+
+    def test_handles_cleared_scene(self):
+        prev_node = self.widget.segmentEditorNode
+        slicer.mrmlScene.Clear()
+        slicer.app.processEvents()
+        self.widget.inputSelector.setCurrentNode(SampleData.SampleDataLogic().downloadMRHead())
+        self.widget.applyButton.click()
+        slicer.app.processEvents()
+        self.logic.inferenceFinished()
+        slicer.app.processEvents()
+        self.assertTrue(self.widget.applyButton.isVisible())
+        self.assertNotEqual(prev_node, self.widget.segmentEditorWidget)
+
+    def test_clearing_scene_mid_inference_stops_inference(self):
+        self.widget.applyButton.click()
+        slicer.app.processEvents()
+        slicer.mrmlScene.Clear()
+        slicer.app.processEvents()
+        self.assertTrue(self.widget.applyButton.isVisible())
+        self.logic.stopDentalSegmentation.assert_called_once()

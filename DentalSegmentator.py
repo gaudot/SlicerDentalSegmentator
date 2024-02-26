@@ -1,13 +1,12 @@
 import slicer
 from slicer.ScriptedLoadableModule import *
-from slicer.i18n import tr, translate
-from slicer.util import VTKObservationMixin
 
 from DentalSegmentatorLib import SegmentationLogic, SegmentationWidget
 
 
 class DentalSegmentator(ScriptedLoadableModule):
     def __init__(self, parent):
+        from slicer.i18n import tr, translate
         ScriptedLoadableModule.__init__(self, parent)
         self.parent.title = tr("DentalSegmentator")
         self.parent.categories = [translate("qSlicerAbstractCoreModule", "Segmentation")]

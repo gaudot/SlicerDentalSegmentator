@@ -6,13 +6,17 @@ import ctk
 import numpy as np
 import qt
 import slicer
-from slicer.util import VTKObservationMixin
 
 from .IconPath import icon, iconPath
 from .PythonDependencyChecker import PythonDependencyChecker
 from .SegmentationLogic import SegmentationLogic, SegmentationLogicProtocol
-from .Utils import createButton, addInCollapsibleLayout, set3DViewBackgroundColors, setConventionalWideScreenView, \
-    setBoxAndTextVisibilityOnThreeDViews
+from .Utils import (
+    createButton,
+    addInCollapsibleLayout,
+    set3DViewBackgroundColors,
+    setConventionalWideScreenView,
+    setBoxAndTextVisibilityOnThreeDViews,
+)
 
 
 class ExportFormat(Flag):
@@ -25,7 +29,6 @@ class SegmentationWidget(qt.QWidget):
     def __init__(self, logic: Optional[SegmentationLogicProtocol] = None, parent=None):
         super().__init__(parent)
         self.logic = logic or SegmentationLogic()
-        self._initSlicerDisplay()
         self._prevSegmentationNode = None
         self._minimumIslandSize_mm3 = 60
 
@@ -53,8 +56,7 @@ class SegmentationWidget(qt.QWidget):
         self.segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
         self.segmentEditorWidget.setSegmentationNodeSelectorVisible(False)
         self.segmentEditorWidget.setSourceVolumeNodeSelectorVisible(False)
-        self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
-        self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
+        self.segmentEditorNode = None
 
         # Find show 3D Button in widget
         self.show3DButton = slicer.util.findChild(self.segmentEditorWidget, "Show3DButton")
@@ -146,6 +148,21 @@ class SegmentationWidget(qt.QWidget):
 
         self.onInputChanged()
         self.updateSegmentEditorWidget()
+        self.sceneCloseObserver = slicer.mrmlScene.AddObserver(slicer.mrmlScene.EndCloseEvent, self.onSceneChanged)
+        self.onSceneChanged(doStopInference=False)
+
+    def __del__(self):
+        slicer.mrmlScene.RemoveObserver(self.sceneCloseObserver)
+        super().__del__()
+
+    def onSceneChanged(self, *_, doStopInference=True):
+        if doStopInference:
+            self.onStopClicked()
+        self.segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
+        self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
+        self.processedVolumes = {}
+        self._prevSegmentationNode = None
+        self._initSlicerDisplay()
 
     @staticmethod
     def _initSlicerDisplay():
@@ -204,6 +221,7 @@ class SegmentationWidget(qt.QWidget):
             )
 
         import torch
+
         if not torch.cuda.is_available():
             ret = qt.QMessageBox.question(
                 self,
