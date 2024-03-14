@@ -19,16 +19,18 @@ class DentalSegmentatorTestCase(unittest.TestCase):
 
 
 def _dataFolderPath():
-    return Path(r"\\wheezy\DevApp\Projects\FFO_3DSlicer\Data\TestingData")
+    return Path(__file__).parent.joinpath("Data")
 
 
 def load_test_CT_volume():
-    return slicer.util.loadVolume(_dataFolderPath().joinpath("Patient_020_0000.nii.gz").as_posix())
+    import SampleData
+    SampleData.SampleDataLogic().downloadDentalSurgery()
+    return list(slicer.mrmlScene.GetNodesByName("PostDentalSurgery"))[0]
 
 
 def get_test_multi_label_path():
-    return _dataFolderPath().joinpath("Patient_020.nii.gz").as_posix()
+    return _dataFolderPath().joinpath("PostDentalSurgery_Segmentation.nii.gz").as_posix()
 
 
 def get_test_multi_label_path_with_segments_1_3_5():
-    return _dataFolderPath().joinpath("Patient_020_segment_1_3_5.nii.gz").as_posix()
+    return _dataFolderPath().joinpath("PostDentalSurgery_Segmentation_1_3_5.nii.gz").as_posix()

@@ -195,6 +195,7 @@ class SegmentationWidget(qt.QWidget):
         """
         self.currentInfoTextEdit.clear()
         self._setApplyVisible(False)
+        self._dependencyChecker.downloadWeightsIfNeeded(self.onProgressInfo)
         self._dependencyChecker.downloadDependenciesIfNeeded(self.onProgressInfo, self.stopButton.clicked)
         self._runSegmentation()
 

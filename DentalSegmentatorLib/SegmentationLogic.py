@@ -33,16 +33,6 @@ class SegmentationLogic:
         self.errorOccurred = Signal("str")
         self.progressInfo = Signal("str")
 
-        fileDir = Path(__file__).parent
-        mlResourcesDir = fileDir.joinpath("..", "Resources", "ML").resolve()
-        assert mlResourcesDir.exists()
-
-        # dir containing the result of the nnunet experiment (weight checkpoints, dataset.json, plans.json, ...)
-        self._nnunet_results_folder = mlResourcesDir.joinpath("SegmentationModel")
-        assert self._nnunet_results_folder.exists()
-
-        self._dataSetPath = next(self._nnunet_results_folder.rglob("dataset.json"))
-
         self.inferenceProcess = qt.QProcess()
         self.inferenceProcess.setProcessChannelMode(qt.QProcess.MergedChannels)
         self.inferenceProcess.finished.connect(self.onFinished)
@@ -50,8 +40,17 @@ class SegmentationLogic:
         self.inferenceProcess.readyRead.connect(self.onCheckStandardOutput)
 
         self._nnUNet_predict_path = None
-
         self._tmpDir = qt.QTemporaryDir()
+
+    @property
+    def _dataSetPath(self):
+        return next(self.nnUnetFolder().rglob("dataset.json"))
+
+    @classmethod
+    def nnUnetFolder(cls):
+        fileDir = Path(__file__).parent
+        mlResourcesDir = fileDir.joinpath("..", "Resources", "ML").resolve()
+        return mlResourcesDir.joinpath("SegmentationModel")
 
     def __del__(self):
         self.stopDentalSegmentation()
@@ -122,20 +121,32 @@ class SegmentationLogic:
          Faster, but less accurate inference.
         """
         import torch
+
+        if not self._dataSetPath.exists():
+            self.errorOccurred(
+                "nnUNet weights are not correctly installed."
+                f" Missing path:\n{self._dataSetPath.as_posix()}"
+            )
+            return
+
         # setup environment variables
         # not needed, just needs to be an existing directory
-        os.environ['nnUNet_preprocessed'] = self._nnunet_results_folder.as_posix()
+        os.environ['nnUNet_preprocessed'] = self.nnUnetFolder().as_posix()
 
         # not needed, just needs to be an existing directory
-        os.environ['nnUNet_raw'] = self._nnunet_results_folder.as_posix()
-        os.environ['nnUNet_results'] = self._nnunet_results_folder.as_posix()
+        os.environ['nnUNet_raw'] = self.nnUnetFolder().as_posix()
+        os.environ['nnUNet_results'] = self.nnUnetFolder().as_posix()
 
         if not self.nnUNet_predict_path:
             self.errorOccurred("Failed to find nnUNet predict path.")
             return
 
-        dataset_name = 'Dataset111_453CT'
-        configuration = '3d_fullres'
+        configuration_folder = self._dataSetPath.parent
+        configuration = configuration_folder.name
+        configuration = configuration.replace("nnUNetTrainer__nnUNetPlans__", "")
+
+        dataset_folder = configuration_folder.parent
+        dataset_name = dataset_folder.name
         device = device if torch.cuda.is_available() else "cpu"
 
         # Construct the command for the nnunnet inference script
