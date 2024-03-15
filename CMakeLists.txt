@@ -12,6 +12,7 @@ set(MODULE_PYTHON_SCRIPTS
   DentalSegmentatorLib/Signal.py
   DentalSegmentatorLib/Utils.py
   Testing/__init__.py
+  Testing/PythonDependencyCheckerTestCase.py
   Testing/SegmentationLogicTestCase.py
   Testing/SegmentationWidgetTestCase.py
   Testing/Utils.py
@@ -19,9 +20,12 @@ set(MODULE_PYTHON_SCRIPTS
 
 set(MODULE_PYTHON_RESOURCES
   Resources/Icons/${MODULE_NAME}.png
+  Resources/Icons/DentalSegmentator_full_icon.png
   Resources/Icons/info.png
   Resources/Icons/loading.gif
   Resources/Icons/start_icon.png
+  Testing/Data/PostDentalSurgery_Segmentation.nii.gz
+  Testing/Data/PostDentalSurgery_Segmentation_1_3_5.nii.gz
   )
 
 #-----------------------------------------------------------------------------
