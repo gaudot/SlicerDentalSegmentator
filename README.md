@@ -16,7 +16,8 @@
 </div>
 
 This module allows to segment CT and CBCT dental volumes.
-It was developed by the AP-HP, Arts et metiers and financed by the FFO (Fédération Française d'Orthodonthie).
+It was developed by the [AP-HP](https://www.aphp.fr/), [Arts et metiers](https://www.artsetmetiers.fr/fr) and financed 
+by the [FFO (Fédération Française d'Orthodonthie)](https://orthodontie-ffo.org/).
 
 After loading and selecting the volume to process, this module generates the following segmentations : 
 * "Maxilla & Upper Skull"
