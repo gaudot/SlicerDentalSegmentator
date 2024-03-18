@@ -1,45 +1,27 @@
-#-----------------------------------------------------------------------------
-set(MODULE_NAME DentalSegmentator)
+cmake_minimum_required(VERSION 3.13.4)
+
+project(DentalSegmentator)
 
 #-----------------------------------------------------------------------------
-set(MODULE_PYTHON_SCRIPTS
-  ${MODULE_NAME}.py
-  DentalSegmentatorLib/__init__.py
-  DentalSegmentatorLib/IconPath.py
-  DentalSegmentatorLib/PythonDependencyChecker.py
-  DentalSegmentatorLib/SegmentationLogic.py
-  DentalSegmentatorLib/SegmentationWidget.py
-  DentalSegmentatorLib/Signal.py
-  DentalSegmentatorLib/Utils.py
-  Testing/__init__.py
-  Testing/PythonDependencyCheckerTestCase.py
-  Testing/SegmentationLogicTestCase.py
-  Testing/SegmentationWidgetTestCase.py
-  Testing/Utils.py
-  )
-
-set(MODULE_PYTHON_RESOURCES
-  Resources/Icons/${MODULE_NAME}.png
-  Resources/Icons/DentalSegmentator_full_icon.png
-  Resources/Icons/info.png
-  Resources/Icons/loading.gif
-  Resources/Icons/start_icon.png
-  Testing/Data/PostDentalSurgery_Segmentation.nii.gz
-  Testing/Data/PostDentalSurgery_Segmentation_1_3_5.nii.gz
-  )
+# Extension meta-information
+set(EXTENSION_HOMEPAGE "https://github.com/gaudot/SlicerDentalSegmentator")
+set(EXTENSION_CATEGORY "Segmentation")
+set(EXTENSION_CONTRIBUTORS "Gauthier DOT (AP-HP), Laurent GAJNY (ENSAM), Roman FENIOUX (KITWARE SAS), Thibault PELLETIER (KITWARE SAS)")
+set(EXTENSION_DESCRIPTION "Fully automatic AI segmentation tool for Dental CT and CBCT scans based on DentalSegmentator nnU-Net model.")
+set(EXTENSION_ICONURL "https://github.com/gaudot/SlicerDentalSegmentator/raw/main/DentalSegmentator/Resources/Icons/DentalSegmentator.png")
+set(EXTENSION_SCREENSHOTURLS "https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/1.png")
+set(EXTENSION_DEPENDS "NA") # Specified as a list or "NA" if no dependencies
 
 #-----------------------------------------------------------------------------
-slicerMacroBuildScriptedModule(
-  NAME ${MODULE_NAME}
-  SCRIPTS ${MODULE_PYTHON_SCRIPTS}
-  RESOURCES ${MODULE_PYTHON_RESOURCES}
-  WITH_GENERIC_TESTS
-  )
+# Extension dependencies
+find_package(Slicer REQUIRED)
+include(${Slicer_USE_FILE})
 
 #-----------------------------------------------------------------------------
-if(BUILD_TESTING)
+# Extension modules
+add_subdirectory(DentalSegmentator)
+## NEXT_MODULE
 
-  # Register the unittest subclass in the main script as a ctest.
-  # Note that the test will also be available at runtime.
-  slicer_add_python_unittest(SCRIPT ${MODULE_NAME}.py)
-endif()
+#-----------------------------------------------------------------------------
+include(${Slicer_EXTENSION_GENERATE_CONFIG})
+include(${Slicer_EXTENSION_CPACK})
