@@ -25,13 +25,6 @@ If you use DentalSegmentator for your work, please cite our paper and nnU-Net:
 
 >Isensee F, Jaeger PF, Kohl SAA, Petersen J, Maier-Hein KH. nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation. Nat Methods. 2021;18(2):203-211. doi:[10.1038/s41592-020-01008-z](https://doi.org/10.1038/s41592-020-01008-z)
 
-
-If you need command-line interface use, [the pretrained model is available on Zenodo platform](https://zenodo.org/doi/10.5281/zenodo.10829674).
-
-
-This work was developed by the [AP-HP (Assistance Publique - Hôpitaux de Paris)](https://www.aphp.fr/), [Arts et Métiers Institute of Technology](https://www.artsetmetiers.fr/fr) and financed 
-by the [FFO (Fédération Française d'Orthodonthie)](https://orthodontie-ffo.org/) and the [Fondation des Gueules Cassées](https://www.gueules-cassees.asso.fr/).
-
 ## Using the extension
 
 This extension is compatible with 3D Slicer 5.6.1 and later versions.
@@ -126,7 +119,18 @@ Create a `download_info.json` file containing the path to the downloaded zip fil
   "download_url": "https://github.com/gaudot/SlicerDentalSegmentator/releases/download/v1.0.0-alpha/Dataset111_453CT_v100.zip"
 }
 
+## Command-line interface  
+
+If you want tu use DentalSegmentator via nnU-Net command-line interface use, [the pretrained model is available on Zenodo platform](https://zenodo.org/doi/10.5281/zenodo.10829674).
+
 ## Contributing
 
 This project welcomes contributions. If you want more information about how you can contribute, please refer to
 the [CONTRIBUTING.md file](CONTRIBUTING.md).
+
+## Acknowledgments 
+
+Authors: G. Dot (Université Paris Cité, AP-HP, Arts-et-Métiers), L. Gajny (Arts-et-Métiers), R. Fenioux (Kitware SAS), T. Pelletier (Kitware SAS)
+
+Supported by the [FFO (Fédération Française d'Orthodontie)](https://orthodontie-ffo.org/) and the [Fondation des Gueules Cassées](https://www.gueules-cassees.asso.fr/).
+
