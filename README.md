@@ -1,30 +1,36 @@
-# Slicer Dental Segmentator
+# Slicer DentalSegmentator 
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/1.png" width="800"/>
+3D Slicer extension for fully-automatic segmentation of CT and CBCT dental volumes.
 
-## Table of contents
-
-* [Introduction](#introduction)
-* [Using the extension](#using-the-extension)
-* [Troubleshooting](#troubleshooting)
-* [Contributing](#contributing)
-
-## Introduction
-
-<div style="text-align:center">
-<img class="center" src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/DentalSegmentator/Resources/Icons/DentalSegmentator_full_icon.png"/>
-</div>
-
-This module allows to segment CT and CBCT dental volumes.
-It was developed by the [AP-HP](https://www.aphp.fr/), [Arts et metiers](https://www.artsetmetiers.fr/fr) and financed 
-by the [FFO (Fédération Française d'Orthodonthie)](https://orthodontie-ffo.org/).
+<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/1.png" width="700"/>
 
 After loading and selecting the volume to process, this module generates the following segmentations : 
-* "Maxilla & Upper Skull"
-* "Mandible"
-* "Upper Teeth"
-* "Lower Teeth"
-* "Mandibular canal"
+* Maxilla & Upper Skull
+* Mandible
+* Upper Teeth
+* Lower Teeth
+* Mandibular canal
+
+## DentalSegmentator model
+
+DentalSegmentator is based on nnU-Net framework. It has been trained on 470 dento-maxillo-facial CT and CBCT scans, and evaluated on a hold-out test dataset of 256 CT and CBCT scans from 7 institutions. 
+
+The results obtained on our highly diversified dataset demonstrate that our tool can provide fully automatic and robust multiclass segmentation for dento-maxillo-facial (CB)CT scans, independantly of the field of view of the scan.
+
+<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/dentalsegmentator_example.png" width="500"/>
+
+If you use DentalSegmentator for your work, please cite our paper and nnU-Net:
+
+>Dot G, Chaurasia A, Dubois G, et al. DentalSegmentator: robust deep learning-based CBCT image segmentation. Published online March 18, 2024:2024.03.18.24304458. doi:[10.1101/2024.03.18.24304458](https://doi.org/10.1101/2024.03.18.24304458)
+
+>Isensee F, Jaeger PF, Kohl SAA, Petersen J, Maier-Hein KH. nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation. Nat Methods. 2021;18(2):203-211. doi:[10.1038/s41592-020-01008-z](https://doi.org/10.1038/s41592-020-01008-z)
+
+
+If you need command-line interface use, [the pretrained model is available on Zenodo platform](https://zenodo.org/doi/10.5281/zenodo.10829674).
+
+
+This work was developed by the [AP-HP (Assistance Publique - Hôpitaux de Paris)](https://www.aphp.fr/), [Arts et Métiers Institute of Technology](https://www.artsetmetiers.fr/fr) and financed 
+by the [FFO (Fédération Française d'Orthodonthie)](https://orthodontie-ffo.org/) and the [Fondation des Gueules Cassées](https://www.gueules-cassees.asso.fr/).
 
 ## Using the extension
 
@@ -41,7 +47,7 @@ The extension can also be installed manually from the sources. To install the ex
 After the restart, the extension can be found in the module file explorer under `Segmentation>DentalSegmentator`.
 It can also be found by using the `find` module button and searching for the keyword `DentalSegmentator`.
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/2.png"/>
+<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/2.png" width="300" />
 
 To use the extension, load a dental CT or CBCT by either drag and dropping the data in 3D Slicer or by using the
 `DATA` or `DCM` load buttons.
@@ -54,7 +60,7 @@ Switch module to the `DentalSegmentator` module and select the volume in the fir
 
 Click on the `Apply` button to start the segmentation.
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/4.png"/>
+<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/4.png" width="300" />
 
 During the first launch, the module's dependencies will be installed. These dependencies include : 
 * The AI model weights
@@ -69,18 +75,18 @@ starting the segmentation process.
 During execution, the processing can be canceled using the `Stop` button.
 The progress will be reported in the console logs.
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/5.png"/>
+<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/5.png" width="300"/>
 
 After the segmentation process has run, the segmentation will be loaded into the application.
 The segmentation results can be modified using the `Segment Editor` tools.
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/1.png"/>
+<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/1.png" width="600"/>
 
 The segmentation can be exported using the `Export segmentation` menu and selecting the export format to use.
 
 The `Surface smoothing` slider allows to change the 3D view surface smoothing algorithm.
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/6.png"/>
+<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/6.png" width="300"/>
 
 ## Troubleshooting
 
@@ -99,7 +105,7 @@ a new version of PyTorch by setting the `Computation backend` compatible with yo
 
 The PyTorch version should be greater than `2.0.0` for nnUNet compatibility.
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/7.png"/>
+<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/7.png" width="300"/>
 
 ### Failed to download / find weights
 
@@ -110,7 +116,7 @@ Download the latest `.zip` file from the release.
 
 Navigate to your `DentalSegmentator` folder (this folder can be also found in the module finder window).
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/8.png"/>
+<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/8.png" width="500"/>
 
 Unzip the weight file in the `DentalSegmentator\Resources\ML\SegmentationModel` folder.
 
