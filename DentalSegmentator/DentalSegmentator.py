@@ -1,7 +1,7 @@
 import slicer
 from slicer.ScriptedLoadableModule import *
 
-from DentalSegmentatorLib import SegmentationLogic, SegmentationWidget
+from DentalSegmentatorLib import SegmentationWidget
 
 
 class DentalSegmentator(ScriptedLoadableModule):
@@ -32,12 +32,14 @@ class DentalSegmentator(ScriptedLoadableModule):
 class DentalSegmentatorWidget(ScriptedLoadableModuleWidget):
     def __init__(self, parent=None) -> None:
         ScriptedLoadableModuleWidget.__init__(self, parent)
-        self.logic = SegmentationLogic()
+        self.logic = None
 
     def setup(self) -> None:
         """Called when the user opens the module the first time and the widget is initialized."""
         ScriptedLoadableModuleWidget.setup(self)
-        self.layout.addWidget(SegmentationWidget())
+        widget = SegmentationWidget()
+        self.logic = widget.logic
+        self.layout.addWidget(widget)
         self.layout.addStretch()
 
 
@@ -50,14 +52,13 @@ class DentalSegmentatorTest(ScriptedLoadableModuleTest):
             slicer.util.warningDisplay("Please install SlicerPythonTestRunner extension to run the self tests.")
             return
 
-        slicer.mrmlScene.Clear()
-
         currentDirTest = Path(__file__).parent.joinpath("Testing")
-        results = RunnerLogic().runAndWaitFinished(currentDirTest, RunSettings(
-            extraPytestArgs=RunSettings.pytestFileFilterArgs("*TestCase.py")
-        ))
+        results = RunnerLogic().runAndWaitFinished(
+            currentDirTest,
+            RunSettings(extraPytestArgs=RunSettings.pytestFileFilterArgs("*TestCase.py") + ["-m not slow"])
+        )
 
         if results.failuresNumber:
-            slicer.util.errorDisplay(f"Test failed :\n{results.getFailingCasesString()}")
+            raise AssertionError(f"Test failed: \n{results.getFailingCasesString()}")
         else:
-            slicer.util.delayDisplay("Test OK")
+            slicer.util.delayDisplay(f"Tests OK. {results.getSummaryString()}")

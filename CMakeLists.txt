@@ -10,7 +10,7 @@ set(EXTENSION_CONTRIBUTORS "Gauthier DOT (AP-HP), Laurent GAJNY (ENSAM), Roman F
 set(EXTENSION_DESCRIPTION "Fully automatic AI segmentation tool for Dental CT and CBCT scans based on DentalSegmentator nnU-Net model.")
 set(EXTENSION_ICONURL "https://github.com/gaudot/SlicerDentalSegmentator/raw/main/DentalSegmentator/Resources/Icons/DentalSegmentator.png")
 set(EXTENSION_SCREENSHOTURLS "https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/1.png")
-set(EXTENSION_DEPENDS "NA") # Specified as a list or "NA" if no dependencies
+set(EXTENSION_DEPENDS "NNUNet") # Specified as a list or "NA" if no dependencies
 
 #-----------------------------------------------------------------------------
 # Extension dependencies

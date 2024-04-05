@@ -6,7 +6,10 @@ import SampleData
 import slicer
 
 from DentalSegmentatorLib import SegmentationWidget, Signal, ExportFormat
-from .Utils import DentalSegmentatorTestCase, get_test_multi_label_path, get_test_multi_label_path_with_segments_1_3_5
+from .Utils import (
+    DentalSegmentatorTestCase, get_test_multi_label_path, get_test_multi_label_path_with_segments_1_3_5,
+    load_test_CT_volume
+)
 
 
 class MockLogic:
@@ -14,11 +17,12 @@ class MockLogic:
         self.inferenceFinished = Signal()
         self.errorOccurred = Signal("str")
         self.progressInfo = Signal("str")
-        self.startDentalSegmentation = MagicMock()
-        self.stopDentalSegmentation = MagicMock()
+        self.startSegmentation = MagicMock()
+        self.stopSegmentation = MagicMock()
+        self.setParameter = MagicMock()
         self.waitForSegmentationFinished = MagicMock()
-        self.loadDentalSegmentation = MagicMock()
-        self.loadDentalSegmentation.side_effect = self.load_segmentation
+        self.loadSegmentation = MagicMock()
+        self.loadSegmentation.side_effect = self.load_segmentation
 
     @staticmethod
     def load_segmentation():
@@ -33,7 +37,7 @@ class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
     def setUp(self):
         super().setUp()
         self.logic = MockLogic()
-        self.node = SampleData.SampleDataLogic().downloadMRHead()
+        self.node = load_test_CT_volume()
 
         self.widget = SegmentationWidget(logic=self.logic)
         self.widget.inputSelector.setCurrentNode(self.node)
@@ -57,7 +61,7 @@ class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
         self.assertFalse(self.widget.segmentationNodeSelector.isEnabled())
         self.assertTrue(self.widget.stopButton.isVisible())
 
-        self.logic.startDentalSegmentation.assert_called_once_with(self.node)
+        self.logic.startSegmentation.assert_called_once_with(self.node)
         self.logic.inferenceFinished()
         slicer.app.processEvents()
 
@@ -65,14 +69,14 @@ class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
         self.assertTrue(self.widget.inputSelector.isEnabled())
         self.assertTrue(self.widget.segmentationNodeSelector.isEnabled())
         self.assertFalse(self.widget.stopButton.isVisible())
-        self.logic.loadDentalSegmentation.assert_called_once()
+        self.logic.loadSegmentation.assert_called_once()
 
     def test_can_kill_segmentation(self):
         self.widget.applyButton.click()
-        self.logic.startDentalSegmentation.assert_called_once()
+        self.logic.startSegmentation.assert_called_once()
 
         self.widget.stopButton.click()
-        self.logic.stopDentalSegmentation.assert_called_once()
+        self.logic.stopSegmentation.assert_called_once()
         self.logic.waitForSegmentationFinished.assert_called_once()
         self.assertTrue(self.widget.applyButton.isVisible())
         self.assertFalse(self.widget.stopButton.isVisible())
@@ -82,7 +86,7 @@ class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
         slicer.app.processEvents()
         self.logic.inferenceFinished()
         slicer.app.processEvents()
-        self.assertEqual(self.logic.loadDentalSegmentation.call_count, 2)
+        self.assertEqual(self.logic.loadSegmentation.call_count, 2)
         self.assertEqual(len(list(slicer.mrmlScene.GetNodesByClass("vtkMRMLSegmentationNode"))), 1)
 
     def test_loading_sets_correct_segment_names(self):
@@ -98,7 +102,7 @@ class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
         self.assertEqual(segmentNames, exp_names)
 
     def test_loading_sets_correct_names_when_segmentation_has_missing_segments(self):
-        self.logic.loadDentalSegmentation.side_effect = self.logic.load_segmentation_partial
+        self.logic.loadSegmentation.side_effect = self.logic.load_segmentation_partial
         self.logic.inferenceFinished()
         slicer.app.processEvents()
         node = self.widget.getCurrentSegmentationNode()
@@ -180,4 +184,4 @@ class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
         slicer.mrmlScene.Clear()
         slicer.app.processEvents()
         self.assertTrue(self.widget.applyButton.isVisible())
-        self.logic.stopDentalSegmentation.assert_called_once()
+        self.logic.stopSegmentation.assert_called_once()

@@ -1,4 +1,5 @@
 from enum import Flag, auto
+from pathlib import Path
 from typing import Optional
 
 import SegmentEditorEffects
@@ -9,7 +10,6 @@ import slicer
 
 from .IconPath import icon, iconPath
 from .PythonDependencyChecker import PythonDependencyChecker
-from .SegmentationLogic import SegmentationLogic, SegmentationLogicProtocol
 from .Utils import (
     createButton,
     addInCollapsibleLayout,
@@ -26,9 +26,9 @@ class ExportFormat(Flag):
 
 
 class SegmentationWidget(qt.QWidget):
-    def __init__(self, logic: Optional[SegmentationLogicProtocol] = None, parent=None):
+    def __init__(self, logic=None, parent=None):
         super().__init__(parent)
-        self.logic = logic or SegmentationLogic()
+        self.logic = logic or self._createSlicerSegmentationLogic()
         self._prevSegmentationNode = None
         self._minimumIslandSize_mm3 = 60
 
@@ -138,9 +138,6 @@ class SegmentationWidget(qt.QWidget):
         addInCollapsibleLayout(exportWidget, layout, "Export segmentation", isCollapsed=False)
         layout.addStretch()
 
-        self.logic.inferenceFinished.connect(self.onInferenceFinished)
-        self.logic.errorOccurred.connect(self.onInferenceError)
-        self.logic.progressInfo.connect(self.onProgressInfo)
         self.isStopping = False
 
         self._dependencyChecker = PythonDependencyChecker()
@@ -150,6 +147,7 @@ class SegmentationWidget(qt.QWidget):
         self.updateSegmentEditorWidget()
         self.sceneCloseObserver = slicer.mrmlScene.AddObserver(slicer.mrmlScene.EndCloseEvent, self.onSceneChanged)
         self.onSceneChanged(doStopInference=False)
+        self._connectSegmentationLogic()
 
     def __del__(self):
         slicer.mrmlScene.RemoveObserver(self.sceneCloseObserver)
@@ -183,7 +181,7 @@ class SegmentationWidget(qt.QWidget):
         """
 
         self.isStopping = True
-        self.logic.stopDentalSegmentation()
+        self.logic.stopSegmentation()
         self.logic.waitForSegmentationFinished()
         slicer.app.processEvents()
         self.isStopping = False
@@ -193,10 +191,19 @@ class SegmentationWidget(qt.QWidget):
         """
         On apply, clear the output log infos, hide apply button, install dependencies and start the segmentation process
         """
+        if not self.isNNUNetModuleInstalled() or self.logic is None:
+            slicer.util.errorDisplay(
+                "This module depends on the NNUNet module."
+                " Please install the NNUNet module and restart to proceed."
+            )
+            return
+
         self.currentInfoTextEdit.clear()
         self._setApplyVisible(False)
+        if not self._installNNUNetIfNeeded():
+            return
+
         self._dependencyChecker.downloadWeightsIfNeeded(self.onProgressInfo)
-        self._dependencyChecker.downloadDependenciesIfNeeded(self.onProgressInfo, self.stopButton.clicked)
         self._runSegmentation()
 
     def _setApplyVisible(self, isVisible):
@@ -214,14 +221,8 @@ class SegmentationWidget(qt.QWidget):
         Make sure the dependencies are available and user is aware CPU process may take time if current install doesn't
         support CUDA before starting the actual segmentation from the logic object.
         """
-        if not self._dependencyChecker.areDependenciesSatisfied():
-            self._setApplyVisible(True)
-            return slicer.util.warningDisplay(
-                "Extension dependencies were not correctly installed."
-                "\nPlease check the logs and reinstall the dependencies before proceeding."
-            )
-
         import torch
+        from SlicerNNUNetLib import Parameter
 
         if not torch.cuda.is_available():
             ret = qt.QMessageBox.question(
@@ -236,7 +237,8 @@ class SegmentationWidget(qt.QWidget):
                 return
 
         slicer.app.processEvents()
-        self.logic.startDentalSegmentation(self.getCurrentVolumeNode())
+        self.logic.setParameter(Parameter(folds="0", modelPath=self.nnUnetFolder()))
+        self.logic.startSegmentation(self.getCurrentVolumeNode())
 
     def onInputChanged(self, *_):
         """
@@ -329,7 +331,7 @@ class SegmentationWidget(qt.QWidget):
         run some simple post-processing on the segmentation.
         """
         currentSegmentation = self.getCurrentSegmentationNode()
-        segmentationNode = self.logic.loadDentalSegmentation()
+        segmentationNode = self.logic.loadSegmentation()
         segmentationNode.SetName(self.getCurrentVolumeNode().GetName() + "_Segmentation")
         if currentSegmentation is not None:
             self._copySegmentationResultsToExistingNode(currentSegmentation, segmentationNode)
@@ -539,3 +541,38 @@ class SegmentationWidget(qt.QWidget):
                 None,
                 "nii.gz"
             )
+
+    @staticmethod
+    def isNNUNetModuleInstalled():
+        try:
+            import SlicerNNUNetLib
+            return True
+        except ImportError:
+            return False
+
+    def _installNNUNetIfNeeded(self) -> bool:
+        from SlicerNNUNetLib import InstallLogic
+        logic = InstallLogic()
+        logic.progressInfo.connect(self.onProgressInfo)
+        return logic.setupPythonRequirements()
+
+    def _createSlicerSegmentationLogic(self):
+        if not self.isNNUNetModuleInstalled():
+            return None
+
+        from SlicerNNUNetLib import SegmentationLogic
+        return SegmentationLogic()
+
+    def _connectSegmentationLogic(self):
+        if self.logic is None:
+            return
+
+        self.logic.progressInfo.connect(self.onProgressInfo)
+        self.logic.errorOccurred.connect(self.onInferenceError)
+        self.logic.inferenceFinished.connect(self.onInferenceFinished)
+
+    @classmethod
+    def nnUnetFolder(cls):
+        fileDir = Path(__file__).parent
+        mlResourcesDir = fileDir.joinpath("..", "Resources", "ML").resolve()
+        return mlResourcesDir.joinpath("SegmentationModel")

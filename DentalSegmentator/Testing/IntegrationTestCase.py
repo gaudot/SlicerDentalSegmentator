@@ -1,9 +1,13 @@
-from DentalSegmentatorLib import PythonDependencyChecker
-from Testing.Utils import DentalSegmentatorTestCase
+import slicer
+
+from DentalSegmentatorLib import PythonDependencyChecker, SegmentationWidget
+from .Utils import DentalSegmentatorTestCase, load_test_CT_volume
 import qt
+import pytest
 
 
-class PythonDependencyCheckerTestCase(DentalSegmentatorTestCase):
+@pytest.mark.slow
+class IntegrationTestCase(DentalSegmentatorTestCase):
     def setUp(self):
         super().setUp()
         self.tmpDir = qt.QTemporaryDir()
@@ -23,3 +27,12 @@ class PythonDependencyCheckerTestCase(DentalSegmentatorTestCase):
         self.assertTrue(deps.areWeightsOutdated())
         deps.downloadWeights(lambda *_: None)
         self.assertFalse(deps.areWeightsOutdated())
+
+    def test_dental_segmentator_can_run_segmentation(self):
+        self.widget = SegmentationWidget()
+        self.widget.inputSelector.setCurrentNode(load_test_CT_volume())
+        self.widget.applyButton.clicked()
+        self.widget.logic.waitForSegmentationFinished()
+        slicer.app.processEvents()
+        segmentations = list(slicer.mrmlScene.GetNodesByClass("vtkMRMLSegmentationNode"))
+        self.assertEqual(len(segmentations), 1)

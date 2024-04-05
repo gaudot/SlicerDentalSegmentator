@@ -1,4 +1,3 @@
-from .SegmentationLogic import SegmentationLogic, SegmentationLogicProtocol
 from .Signal import Signal
 from .PythonDependencyChecker import PythonDependencyChecker
 from .SegmentationWidget import SegmentationWidget, ExportFormat
