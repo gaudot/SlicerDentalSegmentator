@@ -4,23 +4,22 @@ set(MODULE_NAME DentalSegmentator)
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
   ${MODULE_NAME}.py
-  DentalSegmentatorLib/__init__.py
-  DentalSegmentatorLib/IconPath.py
-  DentalSegmentatorLib/PythonDependencyChecker.py
-  DentalSegmentatorLib/SegmentationLogic.py
-  DentalSegmentatorLib/SegmentationWidget.py
-  DentalSegmentatorLib/Signal.py
-  DentalSegmentatorLib/Utils.py
+  ${MODULE_NAME}Lib/__init__.py
+  ${MODULE_NAME}Lib/IconPath.py
+  ${MODULE_NAME}Lib/PythonDependencyChecker.py
+  ${MODULE_NAME}Lib/SegmentationLogic.py
+  ${MODULE_NAME}Lib/SegmentationWidget.py
+  ${MODULE_NAME}Lib/Signal.py
+  ${MODULE_NAME}Lib/Utils.py
   Testing/__init__.py
-  Testing/PythonDependencyCheckerTestCase.py
-  Testing/SegmentationLogicTestCase.py
+  Testing/IntegrationTestCase.py
   Testing/SegmentationWidgetTestCase.py
   Testing/Utils.py
   )
 
 set(MODULE_PYTHON_RESOURCES
   Resources/Icons/${MODULE_NAME}.png
-  Resources/Icons/DentalSegmentator_full_icon.png
+  Resources/Icons/${MODULE_NAME}_full_icon.png
   Resources/Icons/info.png
   Resources/Icons/loading.gif
   Resources/Icons/start_icon.png
