@@ -73,7 +73,7 @@ The progress will be reported in the console logs.
 After the segmentation process has run, the segmentation will be loaded into the application.
 The segmentation results can be modified using the `Segment Editor` tools.
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/1.png" width="600"/>
+https://github.com/gaudot/SlicerDentalSegmentator/assets/78350246/ca138b9b-d540-441e-8743-cd49f0ac08ca
 
 The segmentation can be exported using the `Export segmentation` menu and selecting the export format to use.
 
