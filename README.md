@@ -27,20 +27,18 @@ If you use DentalSegmentator for your work, please cite our paper and nnU-Net:
 
 ## Using the extension
 
-This extension is compatible with 3D Slicer 5.6.1 and later versions.
+This extension is compatible with 3D Slicer 5.7.0 and later versions.
 
-The plugin can be installed in Slicer3D using
+The plugin can be installed in latest Slicer Preview Release (version 5.7.0 - rev32797, or later) using
 the [extension manager]( https://slicer.readthedocs.io/en/latest/user_guide/extensions_manager.html#install-extensions).
 It can be found using the search bar by typing "DentalSegmentator".
 
-The extension can also be installed manually from the sources. To install the extension, navigate to 
-`Edit>Application Settings>Modules` and drag and drop the folder containing  the `DentalSegmentator.py` file in the 
-`Additional module paths` area. Restart 3D Slicer as prompted.
+<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/extension_manager.png" width="300" />
 
-After the restart, the extension can be found in the module file explorer under `Segmentation>DentalSegmentator`.
+After the install process and restart of Slicer, the extension can be found in the module file explorer under `Segmentation>DentalSegmentator`.
 It can also be found by using the `find` module button and searching for the keyword `DentalSegmentator`.
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/2.png" width="300" />
+# <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/2.png" width="300" />
 
 To use the extension, load a dental CT or CBCT by either drag and dropping the data in 3D Slicer or by using the
 `DATA` or `DCM` load buttons.
