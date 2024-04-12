@@ -51,9 +51,7 @@ Click on the `Apply` button to start the segmentation.
 
 <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/4.png" width="300" />
 
-
-https://github.com/gaudot/SlicerDentalSegmentator/assets/78350246/703bfaa1-8130-427c-8810-15d3454f510b
-
+<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/dentalsegmentator_run.gif"/>
 
 During the first launch, the module's dependencies will be installed. These dependencies include : 
 * The AI model weights
@@ -74,9 +72,6 @@ After the segmentation process has run, the segmentation will be loaded into the
 The segmentation results can be modified using the `Segment Editor` tools.
 
 <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/dentalsegmentator_3dmodel.gif"/>
-
-
-https://github.com/gaudot/SlicerDentalSegmentator/assets/78350246/ca138b9b-d540-441e-8743-cd49f0ac08ca
 
 The segmentation can be exported using the `Export segmentation` menu and selecting the export format to use.
 
