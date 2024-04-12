@@ -53,6 +53,10 @@ Click on the `Apply` button to start the segmentation.
 
 <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/4.png" width="300" />
 
+
+https://github.com/gaudot/SlicerDentalSegmentator/assets/78350246/703bfaa1-8130-427c-8810-15d3454f510b
+
+
 During the first launch, the module's dependencies will be installed. These dependencies include : 
 * The AI model weights
 * Light the torch
