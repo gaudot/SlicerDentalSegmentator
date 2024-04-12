@@ -51,8 +51,6 @@ Click on the `Apply` button to start the segmentation.
 
 <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/4.png" width="300" />
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/dentalsegmentator_run.gif"/>
-
 During the first launch, the module's dependencies will be installed. These dependencies include : 
 * The AI model weights
 * Light the torch
@@ -62,6 +60,8 @@ During the first launch, the module's dependencies will be installed. These depe
 After the install, the volume will be transferred and sent to the nnUNet V2 library for processing.
 If your device doesn't include CUDA, the processing may be very long and a dialog will ask for confirmation before
 starting the segmentation process.
+
+<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/dentalsegmentator_run.gif"/>
 
 During execution, the processing can be canceled using the `Stop` button.
 The progress will be reported in the console logs.
