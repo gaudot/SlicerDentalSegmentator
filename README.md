@@ -81,6 +81,10 @@ The `Surface smoothing` slider allows to change the 3D view surface smoothing al
 
 ## Troubleshooting
 
+### MacOS GPU acceleration
+
+Due to an ongoing issue with Mac devices and Pytorch, GPU acceleration is not available for now on those devices.
+
 ### Linux Processing hang
 
 On Linux or WSL system, the inference can get stuck at the stage : "done with volume".
