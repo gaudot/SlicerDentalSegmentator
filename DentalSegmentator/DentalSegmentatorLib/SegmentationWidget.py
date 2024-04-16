@@ -201,9 +201,13 @@ class SegmentationWidget(qt.QWidget):
         self.currentInfoTextEdit.clear()
         self._setApplyVisible(False)
         if not self._installNNUNetIfNeeded():
+            self._setApplyVisible(True)
             return
 
-        self._dependencyChecker.downloadWeightsIfNeeded(self.onProgressInfo)
+        if not self._dependencyChecker.downloadWeightsIfNeeded(self.onProgressInfo):
+            self._setApplyVisible(True)
+            return
+
         self._runSegmentation()
 
     def _setApplyVisible(self, isVisible):

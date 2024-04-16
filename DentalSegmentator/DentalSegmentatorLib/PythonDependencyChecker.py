@@ -30,11 +30,16 @@ class PythonDependencyChecker:
 
     def downloadWeightsIfNeeded(self, progressCallback):
         if self.areWeightsMissing():
-            self.downloadWeights(progressCallback)
+            return self.downloadWeights(progressCallback)
 
         elif self.areWeightsOutdated():
-            if qt.QMessageBox.question("New weights are available. Would you like to download them?"):
-                self.downloadWeights(progressCallback)
+            if qt.QMessageBox.question(
+                    None,
+                    "New weights are available",
+                    "New weights are available. Would you like to download them?"
+            ):
+                return self.downloadWeights(progressCallback)
+        return True
 
     def areWeightsMissing(self):
         return self.getDatasetPath() is None
@@ -82,7 +87,7 @@ class PythonDependencyChecker:
             shutil.rmtree(self.destWeightFolder)
         self.destWeightFolder.mkdir(parents=True, exist_ok=True)
 
-        with slicer.util.tryWithErrorDisplay("Failed to download the weights from the repository."):
+        try:
             download_url = self.getLatestReleaseUrl()
             session = requests.Session()
             response = session.get(download_url, stream=True)
@@ -96,6 +101,16 @@ class PythonDependencyChecker:
 
             self.extractWeightsToWeightsFolder(destZipPath)
             self.writeDownloadInfoURL(download_url)
+            return True
+        except Exception:  # noqa
+            import traceback
+            slicer.util.errorDisplay(
+                "Failed to download weights. Please retry or manually install them to proceed.\n"
+                "To manually install the weights, please refer to the documentation here :\n"
+                "https://github.com/gaudot/SlicerDentalSegmentator",
+                detailedText=traceback.format_exc()
+            )
+            return False
 
     def extractWeightsToWeightsFolder(self, zipPath):
         with zipfile.ZipFile(zipPath, "r") as f:
