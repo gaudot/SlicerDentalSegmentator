@@ -113,7 +113,7 @@ Navigate to your `DentalSegmentator` folder (this folder can be also found in th
 
 <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/8.png" width="500"/>
 
-Unzip the weight file in the `DentalSegmentator\Resources\ML\SegmentationModel` folder.
+Unzip the weight file in the `DentalSegmentator\Resources\ML` folder.
 
 Create a `download_info.json` file containing the path to the downloaded zip file for future reference : 
 

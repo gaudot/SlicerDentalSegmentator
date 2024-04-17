@@ -14,9 +14,9 @@ class PythonDependencyChecker:
     """
 
     def __init__(self, repoPath=None, destWeightFolder=None):
-        from .SegmentationLogic import SegmentationLogic
+        from .SegmentationWidget import SegmentationWidget
         self.dependencyChecked = False
-        self.destWeightFolder = Path(destWeightFolder or SegmentationLogic.nnUnetFolder())
+        self.destWeightFolder = Path(destWeightFolder or SegmentationWidget.nnUnetFolder())
         self.repo_path = repoPath or "gaudot/SlicerDentalSegmentator"
 
     @classmethod

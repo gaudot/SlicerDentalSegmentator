@@ -578,5 +578,4 @@ class SegmentationWidget(qt.QWidget):
     @classmethod
     def nnUnetFolder(cls):
         fileDir = Path(__file__).parent
-        mlResourcesDir = fileDir.joinpath("..", "Resources", "ML").resolve()
-        return mlResourcesDir.joinpath("SegmentationModel")
+        return fileDir.joinpath("..", "Resources", "ML").resolve()
