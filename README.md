@@ -27,9 +27,11 @@ If you use DentalSegmentator for your work, please cite our paper and nnU-Net:
 
 ## Using the extension
 
-This extension is compatible with 3D Slicer 5.7.0 and later versions, downloadable [from the official website]( https://download.slicer.org/ ). 
+[Here is a video tutorial](https://www.youtube.com/watch?v=BEG-XhjjiaY) showing the installation process and demonstrating the main capabilities of the extension.
 
-The plugin can be installed in latest Slicer Preview Release (version 5.7.0 - rev32797, or later) using
+This extension is compatible with the latest latest 3D Slicer Preview Release (version 5.7.0 - rev32797, or later), downloadable [from the official website]( https://download.slicer.org/ ). 
+
+The plugin can be installed in Slicer using
 the [extension manager]( https://slicer.readthedocs.io/en/latest/user_guide/extensions_manager.html#install-extensions).
 It can be found using the search bar by typing "DentalSegmentator".
 
