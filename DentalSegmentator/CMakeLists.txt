@@ -7,7 +7,6 @@ set(MODULE_PYTHON_SCRIPTS
   ${MODULE_NAME}Lib/__init__.py
   ${MODULE_NAME}Lib/IconPath.py
   ${MODULE_NAME}Lib/PythonDependencyChecker.py
-  ${MODULE_NAME}Lib/SegmentationLogic.py
   ${MODULE_NAME}Lib/SegmentationWidget.py
   ${MODULE_NAME}Lib/Signal.py
   ${MODULE_NAME}Lib/Utils.py
