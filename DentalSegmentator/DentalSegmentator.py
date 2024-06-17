@@ -46,7 +46,7 @@ class DentalSegmentatorWidget(ScriptedLoadableModuleWidget):
 class DentalSegmentatorTest(ScriptedLoadableModuleTest):
     def runTest(self):
         try:
-            from SlicerPythonTestRunnerLib import RunnerLogic, RunnerWidget, RunSettings
+            from SlicerPythonTestRunnerLib import RunnerLogic, RunnerWidget, RunSettings, isRunningInTestMode
             from pathlib import Path
         except ImportError:
             slicer.util.warningDisplay("Please install SlicerPythonTestRunner extension to run the self tests.")
@@ -55,10 +55,11 @@ class DentalSegmentatorTest(ScriptedLoadableModuleTest):
         currentDirTest = Path(__file__).parent.joinpath("Testing")
         results = RunnerLogic().runAndWaitFinished(
             currentDirTest,
-            RunSettings(extraPytestArgs=RunSettings.pytestFileFilterArgs("*TestCase.py") + ["-m not slow"])
+            RunSettings(extraPytestArgs=RunSettings.pytestFileFilterArgs("*TestCase.py") + ["-m not slow"]),
+            doRunInSubProcess=not isRunningInTestMode()
         )
 
         if results.failuresNumber:
             raise AssertionError(f"Test failed: \n{results.getFailingCasesString()}")
-        else:
-            slicer.util.delayDisplay(f"Tests OK. {results.getSummaryString()}")
+
+        slicer.util.delayDisplay(f"Tests OK. {results.getSummaryString()}")
