@@ -1,6 +1,5 @@
 from enum import Flag, auto
 from pathlib import Path
-from typing import Optional
 
 import SegmentEditorEffects
 import ctk
@@ -40,6 +39,10 @@ class SegmentationWidget(qt.QWidget):
         self.inputSelector.setMRMLScene(slicer.mrmlScene)
         self.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onInputChanged)
 
+        # Configure inference device options
+        self.deviceComboBox = qt.QComboBox()
+        self.deviceComboBox.addItems(["cuda", "cpu", "mps"])
+
         # Configure segment editor
         self.segmentationNodeSelector = slicer.qMRMLNodeComboBox(self)
         self.segmentationNodeSelector.nodeTypes = ["vtkMRMLSegmentationNode"]
@@ -56,6 +59,7 @@ class SegmentationWidget(qt.QWidget):
         self.segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
         self.segmentEditorWidget.setSegmentationNodeSelectorVisible(False)
         self.segmentEditorWidget.setSourceVolumeNodeSelectorVisible(False)
+        self.segmentEditorWidget.layout().setContentsMargins(0, 0, 0, 0)
         self.segmentEditorNode = None
 
         # Find show 3D Button in widget
@@ -87,8 +91,14 @@ class SegmentationWidget(qt.QWidget):
         exportLayout.addRow(createButton("Export", callback=self.onExportClicked, parent=exportWidget))
 
         layout = qt.QVBoxLayout(self)
-        layout.addWidget(self.inputSelector)
-        layout.addWidget(self.segmentationNodeSelector)
+        self.inputWidget = qt.QWidget(self)
+        inputLayout = qt.QFormLayout(self.inputWidget)
+        inputLayout.setContentsMargins(0, 0, 0, 0)
+        inputLayout.addRow(self.inputSelector)
+        inputLayout.addRow(self.segmentationNodeSelector)
+        inputLayout.addRow("Device:", self.deviceComboBox)
+        layout.addWidget(self.inputWidget)
+
         self.applyButton = createButton(
             "Apply",
             callback=self.onApplyClicked,
@@ -217,22 +227,23 @@ class SegmentationWidget(qt.QWidget):
         """
         self.applyWidget.setVisible(isVisible)
         self.stopWidget.setVisible(not isVisible)
-        self.inputSelector.setEnabled(isVisible)
-        self.segmentationNodeSelector.setEnabled(isVisible)
+        self.inputWidget.setEnabled(isVisible)
 
     def _runSegmentation(self):
         """
         Make sure the dependencies are available and user is aware CPU process may take time if current install doesn't
         support CUDA before starting the actual segmentation from the logic object.
         """
-        import torch
         from SlicerNNUNetLib import Parameter
 
-        if not torch.cuda.is_available():
+        parameter = Parameter(folds="0", modelPath=self.nnUnetFolder(), device=self.deviceComboBox.currentText)
+        if not parameter.isSelectedDeviceAvailable():
+            deviceName = parameter.device.upper()
             ret = qt.QMessageBox.question(
                 self,
-                "CUDA not available",
-                "CUDA is not currently available on your system.\n"
+                f"{deviceName} device not available",
+                f"Selected device ({deviceName}) is not currently available on your system and will "
+                "default to CPU device.\n"
                 "Running the segmentation may take up to 1 hour.\n"
                 "Would you like to proceed?"
             )
@@ -241,7 +252,7 @@ class SegmentationWidget(qt.QWidget):
                 return
 
         slicer.app.processEvents()
-        self.logic.setParameter(Parameter(folds="0", modelPath=self.nnUnetFolder()))
+        self.logic.setParameter(parameter)
         self.logic.startSegmentation(self.getCurrentVolumeNode())
 
     def onInputChanged(self, *_):
