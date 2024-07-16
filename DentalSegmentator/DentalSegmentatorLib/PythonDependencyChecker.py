@@ -1,23 +1,50 @@
 import json
-import sys
 import zipfile
 from pathlib import Path
+from typing import Optional, Callable
 
 import qt
 import slicer
 from github import Github, GithubException
 
 
+def hasInternetConnection(timeOut_sec=1) -> bool:
+    """
+    Check if user has access to the internet.
+    """
+    import requests
+    try:
+        requests.get("https://www.google.com", timeout=timeOut_sec)
+        return True
+    except requests.ConnectionError:
+        return False
+
+
 class PythonDependencyChecker:
     """
-    Class responsible for installing the Modules dependencies
+    Class responsible for installing the Modules dependencies and downloading the model weights.
     """
 
-    def __init__(self, repoPath=None, destWeightFolder=None):
+    def __init__(
+            self,
+            repoPath: Optional[str] = None,
+            destWeightFolder: Optional[Path] = None,
+            hasInternetConnectionF: Optional[Callable[[], bool]] = None,
+            errorDisplayF=None
+    ):
+        """
+        :param repoPath: Optional path to the github repository from which the weights will be downloaded from.
+        :param destWeightFolder: Optional path to where the weights will be saved.
+        :param hasInternetConnectionF: Optional function returning True when internet connection is available, False
+            otherwise.
+        :param errorDisplayF: Optional function used to display error information.
+        """
         from .SegmentationWidget import SegmentationWidget
         self.dependencyChecked = False
         self.destWeightFolder = Path(destWeightFolder or SegmentationWidget.nnUnetFolder())
         self.repo_path = repoPath or "gaudot/SlicerDentalSegmentator"
+        self.hasInternetConnectionF = hasInternetConnectionF or hasInternetConnection
+        self.errorDisplay = errorDisplayF or slicer.util.errorDisplay
 
     @classmethod
     def areDependenciesSatisfied(cls):
@@ -50,9 +77,16 @@ class PythonDependencyChecker:
         assets = [asset for release in repo.get_releases() for asset in release.get_assets()]
         return assets[0].browser_download_url
 
-    def areWeightsOutdated(self):
+    def areWeightsOutdated(self) -> bool:
+        """
+        :returns: True if weights information are missing or internet connection is available and weights information
+            don't match the ones on the GitHub page. False otherwise.
+        """
         if not self.getWeightDownloadInfoPath().exists():
             return True
+
+        if not self.hasInternetConnectionF():
+            return False
 
         try:
             return self.getLastDownloadedWeights() != self.getLatestReleaseUrl()
@@ -78,11 +112,26 @@ class PythonDependencyChecker:
         with open(self.getWeightDownloadInfoPath(), "r") as f:
             return json.loads(f.read()).get("download_url")
 
-    def downloadWeights(self, progressCallback):
+    def downloadWeights(self, progressCallback) -> bool:
+        """
+        Removes the weight folder and tries to download the weights from the GitHub page.
+        If an internet connection is not available, keeps the current weights unchanged.
+
+        :returns: True if download was successful. False in case of no internet or failure during download.
+        """
         import shutil
         import requests
 
         progressCallback("Downloading model weights...")
+        if not self.hasInternetConnectionF():
+            self.errorDisplay(
+                "Failed to download weights (no internet connection). "
+                "Please retry or manually install them to proceed.\n"
+                "To manually install the weights, please refer to the documentation here :\n"
+                "https://github.com/gaudot/SlicerDentalSegmentator",
+            )
+            return False
+
         if self.destWeightFolder.exists():
             shutil.rmtree(self.destWeightFolder)
         self.destWeightFolder.mkdir(parents=True, exist_ok=True)
@@ -104,7 +153,7 @@ class PythonDependencyChecker:
             return True
         except Exception:  # noqa
             import traceback
-            slicer.util.errorDisplay(
+            self.errorDisplay(
                 "Failed to download weights. Please retry or manually install them to proceed.\n"
                 "To manually install the weights, please refer to the documentation here :\n"
                 "https://github.com/gaudot/SlicerDentalSegmentator",

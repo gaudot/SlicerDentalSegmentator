@@ -576,6 +576,6 @@ class SegmentationWidget(qt.QWidget):
         self.logic.inferenceFinished.connect(self.onInferenceFinished)
 
     @classmethod
-    def nnUnetFolder(cls):
+    def nnUnetFolder(cls) -> Path:
         fileDir = Path(__file__).parent
         return fileDir.joinpath("..", "Resources", "ML").resolve()
