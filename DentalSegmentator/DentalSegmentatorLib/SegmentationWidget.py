@@ -43,7 +43,7 @@ class SegmentationWidget(qt.QWidget):
         self.deviceComboBox = qt.QComboBox()
         self.deviceComboBox.addItems(["cuda", "cpu", "mps"])
 
-        # Configure segment editor
+        # Configure segment editor node selector
         self.segmentationNodeSelector = slicer.qMRMLNodeComboBox(self)
         self.segmentationNodeSelector.nodeTypes = ["vtkMRMLSegmentationNode"]
         self.segmentationNodeSelector.selectNodeUponCreation = True
@@ -53,6 +53,10 @@ class SegmentationWidget(qt.QWidget):
         self.segmentationNodeSelector.renameEnabled = True
         self.segmentationNodeSelector.setMRMLScene(slicer.mrmlScene)
         self.segmentationNodeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateSegmentEditorWidget)
+
+        # Override default segment node selector text to be more explicit than "Select Segmentation"
+        segmentationSelectorComboBox = self.segmentationNodeSelector.findChild("ctkComboBox")
+        segmentationSelectorComboBox.defaultText = "Create new Segmentation on Apply"
 
         # Create segment editor widget
         self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget(self)
