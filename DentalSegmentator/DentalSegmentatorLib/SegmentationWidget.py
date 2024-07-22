@@ -1,6 +1,5 @@
 from enum import Flag, auto
 from pathlib import Path
-from typing import Optional
 
 import SegmentEditorEffects
 import ctk
@@ -9,7 +8,7 @@ import qt
 import slicer
 
 from .IconPath import icon, iconPath
-from .PythonDependencyChecker import PythonDependencyChecker
+from .PythonDependencyChecker import PythonDependencyChecker, hasInternetConnection
 from .Utils import (
     createButton,
     addInCollapsibleLayout,
@@ -23,6 +22,7 @@ class ExportFormat(Flag):
     OBJ = auto()
     STL = auto()
     NIFTI = auto()
+    GLTF = auto()
 
 
 class SegmentationWidget(qt.QWidget):
@@ -40,7 +40,11 @@ class SegmentationWidget(qt.QWidget):
         self.inputSelector.setMRMLScene(slicer.mrmlScene)
         self.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onInputChanged)
 
-        # Configure segment editor
+        # Configure inference device options
+        self.deviceComboBox = qt.QComboBox()
+        self.deviceComboBox.addItems(["cuda", "cpu", "mps"])
+
+        # Configure segment editor node selector
         self.segmentationNodeSelector = slicer.qMRMLNodeComboBox(self)
         self.segmentationNodeSelector.nodeTypes = ["vtkMRMLSegmentationNode"]
         self.segmentationNodeSelector.selectNodeUponCreation = True
@@ -51,11 +55,16 @@ class SegmentationWidget(qt.QWidget):
         self.segmentationNodeSelector.setMRMLScene(slicer.mrmlScene)
         self.segmentationNodeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateSegmentEditorWidget)
 
+        # Override default segment node selector text to be more explicit than "Select Segmentation"
+        segmentationSelectorComboBox = self.segmentationNodeSelector.findChild("ctkComboBox")
+        segmentationSelectorComboBox.defaultText = "Create new Segmentation on Apply"
+
         # Create segment editor widget
         self.segmentEditorWidget = slicer.qMRMLSegmentEditorWidget(self)
         self.segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
         self.segmentEditorWidget.setSegmentationNodeSelectorVisible(False)
         self.segmentEditorWidget.setSourceVolumeNodeSelectorVisible(False)
+        self.segmentEditorWidget.layout().setContentsMargins(0, 0, 0, 0)
         self.segmentEditorNode = None
 
         # Find show 3D Button in widget
@@ -81,14 +90,32 @@ class SegmentationWidget(qt.QWidget):
         self.stlCheckBox.setChecked(True)
         self.objCheckBox = qt.QCheckBox(exportWidget)
         self.niftiCheckBox = qt.QCheckBox(exportWidget)
+        self.gltfCheckBox = qt.QCheckBox(exportWidget)
+        self.reductionFactorSlider = ctk.ctkSliderWidget()
+        self.reductionFactorSlider.maximum = 1.0
+        self.reductionFactorSlider.value = 0.9
+        self.reductionFactorSlider.singleStep = 0.01
+        self.reductionFactorSlider.toolTip = (
+            "Decimation factor determining how much the mesh complexity will be reduced. "
+            "Higher value means stronger reduction (smaller files, less details preserved)."
+        )
+
         exportLayout.addRow("Export STL", self.stlCheckBox)
         exportLayout.addRow("Export OBJ", self.objCheckBox)
         exportLayout.addRow("Export NIFTI", self.niftiCheckBox)
+        exportLayout.addRow("Export glTF", self.gltfCheckBox)
+        exportLayout.addRow("glTF reduction factor :", self.reductionFactorSlider)
         exportLayout.addRow(createButton("Export", callback=self.onExportClicked, parent=exportWidget))
 
         layout = qt.QVBoxLayout(self)
-        layout.addWidget(self.inputSelector)
-        layout.addWidget(self.segmentationNodeSelector)
+        self.inputWidget = qt.QWidget(self)
+        inputLayout = qt.QFormLayout(self.inputWidget)
+        inputLayout.setContentsMargins(0, 0, 0, 0)
+        inputLayout.addRow(self.inputSelector)
+        inputLayout.addRow(self.segmentationNodeSelector)
+        inputLayout.addRow("Device:", self.deviceComboBox)
+        layout.addWidget(self.inputWidget)
+
         self.applyButton = createButton(
             "Apply",
             callback=self.onApplyClicked,
@@ -217,22 +244,23 @@ class SegmentationWidget(qt.QWidget):
         """
         self.applyWidget.setVisible(isVisible)
         self.stopWidget.setVisible(not isVisible)
-        self.inputSelector.setEnabled(isVisible)
-        self.segmentationNodeSelector.setEnabled(isVisible)
+        self.inputWidget.setEnabled(isVisible)
 
     def _runSegmentation(self):
         """
         Make sure the dependencies are available and user is aware CPU process may take time if current install doesn't
         support CUDA before starting the actual segmentation from the logic object.
         """
-        import torch
         from SlicerNNUNetLib import Parameter
 
-        if not torch.cuda.is_available():
+        parameter = Parameter(folds="0", modelPath=self.nnUnetFolder(), device=self.deviceComboBox.currentText)
+        if not parameter.isSelectedDeviceAvailable():
+            deviceName = parameter.device.upper()
             ret = qt.QMessageBox.question(
                 self,
-                "CUDA not available",
-                "CUDA is not currently available on your system.\n"
+                f"{deviceName} device not available",
+                f"Selected device ({deviceName}) is not currently available on your system and will "
+                "default to CPU device.\n"
                 "Running the segmentation may take up to 1 hour.\n"
                 "Would you like to proceed?"
             )
@@ -241,7 +269,7 @@ class SegmentationWidget(qt.QWidget):
                 return
 
         slicer.app.processEvents()
-        self.logic.setParameter(Parameter(folds="0", modelPath=self.nnUnetFolder()))
+        self.logic.setParameter(parameter)
         self.logic.startSegmentation(self.getCurrentVolumeNode())
 
     def onInputChanged(self, *_):
@@ -497,6 +525,7 @@ class SegmentationWidget(qt.QWidget):
             self.objCheckBox: ExportFormat.OBJ,
             self.stlCheckBox: ExportFormat.STL,
             self.niftiCheckBox: ExportFormat.NIFTI,
+            self.gltfCheckBox: ExportFormat.GLTF
         }
 
         for checkBox, exportFormat in checkBoxes.items():
@@ -524,8 +553,7 @@ class SegmentationWidget(qt.QWidget):
             self.exportSegmentation(segmentationNode, folderPath, selectedFormats)
             slicer.util.infoDisplay(f"Export successful to {folderPath}.")
 
-    @staticmethod
-    def exportSegmentation(segmentationNode, folderPath, selectedFormats):
+    def exportSegmentation(self, segmentationNode, folderPath, selectedFormats):
         for closedSurfaceExport in [ExportFormat.STL, ExportFormat.OBJ]:
             if selectedFormats & closedSurfaceExport:
                 slicer.vtkSlicerSegmentationsModuleLogic.ExportSegmentsClosedSurfaceRepresentationToFiles(
@@ -545,6 +573,53 @@ class SegmentationWidget(qt.QWidget):
                 None,
                 "nii.gz"
             )
+
+        if selectedFormats & ExportFormat.GLTF:
+            self._exportToGLTF(segmentationNode, folderPath)
+
+    def _exportToGLTF(self, segmentationNode, folderPath, tryInstall=True):
+        """
+        Export input segmentation node to glTF format.
+        Export relies on the SlicerOpenAnatomy extension. If extension is not available, export will try to install it
+        provided an internet connection is available.
+
+        Otherwise, export will fail and will ask users to install the extension manually to proceed.
+        """
+        try:
+            from OpenAnatomyExport import OpenAnatomyExportLogic
+
+            logic = OpenAnatomyExportLogic()
+            shNode = slicer.vtkMRMLSubjectHierarchyNode.GetSubjectHierarchyNode(slicer.mrmlScene)
+            segmentationItem = shNode.GetItemByDataNode(self.segmentationNodeSelector.currentNode())
+            logic.exportModel(segmentationItem, folderPath, self.reductionFactorSlider.value, "glTF")
+        except ImportError:
+            if not tryInstall or not hasInternetConnection():
+                slicer.util.errorDisplay(
+                    f"Failed to export to glTF. Try installing the SlicerOpenAnatomy extension manually to continue."
+                )
+                return
+            self._installOpenAnatomyExtension()
+            self._exportToGLTF(segmentationNode, folderPath, tryInstall=False)
+
+    @classmethod
+    def _installOpenAnatomyExtension(cls):
+        # Install extension from extension manager
+        extensionManager = slicer.app.extensionsManagerModel()
+        extensionManager.setInteractive(False)
+        extName = "SlicerOpenAnatomy"
+        if extensionManager.isExtensionInstalled(extName):
+            return
+
+        success = extensionManager.installExtensionFromServer(extName, False, False)
+        if not success:
+            return
+
+        # If install was successful, load the open anatomy export module to be used by the exporter
+        moduleName = "OpenAnatomyExport"
+        modulePath = extensionManager.extensionModulePaths(extName)[0] + f"/{moduleName}.py"
+        factory = slicer.app.moduleManager().factoryManager()
+        factory.registerModule(qt.QFileInfo(modulePath))
+        factory.loadModules([moduleName])
 
     @staticmethod
     def isNNUNetModuleInstalled():
@@ -576,6 +651,6 @@ class SegmentationWidget(qt.QWidget):
         self.logic.inferenceFinished.connect(self.onInferenceFinished)
 
     @classmethod
-    def nnUnetFolder(cls):
+    def nnUnetFolder(cls) -> Path:
         fileDir = Path(__file__).parent
         return fileDir.joinpath("..", "Resources", "ML").resolve()

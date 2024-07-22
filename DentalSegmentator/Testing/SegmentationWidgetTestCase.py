@@ -120,10 +120,11 @@ class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
         self.widget.objCheckBox.setChecked(True)
         self.widget.stlCheckBox.setChecked(True)
         self.widget.niftiCheckBox.setChecked(True)
+        self.widget.gltfCheckBox.setChecked(True)
         allFormats = self.widget.getSelectedExportFormats()
         self.assertEqual(
             allFormats,
-            ExportFormat.NIFTI | ExportFormat.STL | ExportFormat.OBJ
+            ExportFormat.NIFTI | ExportFormat.STL | ExportFormat.OBJ | ExportFormat.GLTF
         )
 
         with TemporaryDirectory() as tmp:
@@ -134,6 +135,7 @@ class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
             self.assertEqual(len(list(tmpPath.glob("*.stl"))), 5)
             self.assertEqual(len(list(tmpPath.glob("*.obj"))), 1)
             self.assertEqual(len(list(tmpPath.glob("*.nii.gz"))), 1)
+            self.assertEqual(len(list(tmpPath.glob("*.gltf"))), 1)
 
     def test_synchronises_segmentation_selector_to_processed_volume(self):
         self.assertIsNone(self.widget.getCurrentSegmentationNode())
