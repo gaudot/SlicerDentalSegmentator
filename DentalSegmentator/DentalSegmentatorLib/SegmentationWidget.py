@@ -8,7 +8,7 @@ import qt
 import slicer
 
 from .IconPath import icon, iconPath
-from .PythonDependencyChecker import PythonDependencyChecker
+from .PythonDependencyChecker import PythonDependencyChecker, hasInternetConnection
 from .Utils import (
     createButton,
     addInCollapsibleLayout,
@@ -22,6 +22,7 @@ class ExportFormat(Flag):
     OBJ = auto()
     STL = auto()
     NIFTI = auto()
+    GLTF = auto()
 
 
 class SegmentationWidget(qt.QWidget):
@@ -89,9 +90,21 @@ class SegmentationWidget(qt.QWidget):
         self.stlCheckBox.setChecked(True)
         self.objCheckBox = qt.QCheckBox(exportWidget)
         self.niftiCheckBox = qt.QCheckBox(exportWidget)
+        self.gltfCheckBox = qt.QCheckBox(exportWidget)
+        self.reductionFactorSlider = ctk.ctkSliderWidget()
+        self.reductionFactorSlider.maximum = 1.0
+        self.reductionFactorSlider.value = 0.9
+        self.reductionFactorSlider.singleStep = 0.01
+        self.reductionFactorSlider.toolTip = (
+            "Decimation factor determining how much the mesh complexity will be reduced. "
+            "Higher value means stronger reduction (smaller files, less details preserved)."
+        )
+
         exportLayout.addRow("Export STL", self.stlCheckBox)
         exportLayout.addRow("Export OBJ", self.objCheckBox)
         exportLayout.addRow("Export NIFTI", self.niftiCheckBox)
+        exportLayout.addRow("Export glTF", self.gltfCheckBox)
+        exportLayout.addRow("glTF reduction factor :", self.reductionFactorSlider)
         exportLayout.addRow(createButton("Export", callback=self.onExportClicked, parent=exportWidget))
 
         layout = qt.QVBoxLayout(self)
@@ -512,6 +525,7 @@ class SegmentationWidget(qt.QWidget):
             self.objCheckBox: ExportFormat.OBJ,
             self.stlCheckBox: ExportFormat.STL,
             self.niftiCheckBox: ExportFormat.NIFTI,
+            self.gltfCheckBox: ExportFormat.GLTF
         }
 
         for checkBox, exportFormat in checkBoxes.items():
@@ -539,8 +553,7 @@ class SegmentationWidget(qt.QWidget):
             self.exportSegmentation(segmentationNode, folderPath, selectedFormats)
             slicer.util.infoDisplay(f"Export successful to {folderPath}.")
 
-    @staticmethod
-    def exportSegmentation(segmentationNode, folderPath, selectedFormats):
+    def exportSegmentation(self, segmentationNode, folderPath, selectedFormats):
         for closedSurfaceExport in [ExportFormat.STL, ExportFormat.OBJ]:
             if selectedFormats & closedSurfaceExport:
                 slicer.vtkSlicerSegmentationsModuleLogic.ExportSegmentsClosedSurfaceRepresentationToFiles(
@@ -560,6 +573,53 @@ class SegmentationWidget(qt.QWidget):
                 None,
                 "nii.gz"
             )
+
+        if selectedFormats & ExportFormat.GLTF:
+            self._exportToGLTF(segmentationNode, folderPath)
+
+    def _exportToGLTF(self, segmentationNode, folderPath, tryInstall=True):
+        """
+        Export input segmentation node to glTF format.
+        Export relies on the SlicerOpenAnatomy extension. If extension is not available, export will try to install it
+        provided an internet connection is available.
+
+        Otherwise, export will fail and will ask users to install the extension manually to proceed.
+        """
+        try:
+            from OpenAnatomyExport import OpenAnatomyExportLogic
+
+            logic = OpenAnatomyExportLogic()
+            shNode = slicer.vtkMRMLSubjectHierarchyNode.GetSubjectHierarchyNode(slicer.mrmlScene)
+            segmentationItem = shNode.GetItemByDataNode(self.segmentationNodeSelector.currentNode())
+            logic.exportModel(segmentationItem, folderPath, self.reductionFactorSlider.value, "glTF")
+        except ImportError:
+            if not tryInstall or not hasInternetConnection():
+                slicer.util.errorDisplay(
+                    f"Failed to export to glTF. Try installing the SlicerOpenAnatomy extension manually to continue."
+                )
+                return
+            self._installOpenAnatomyExtension()
+            self._exportToGLTF(segmentationNode, folderPath, tryInstall=False)
+
+    @classmethod
+    def _installOpenAnatomyExtension(cls):
+        # Install extension from extension manager
+        extensionManager = slicer.app.extensionsManagerModel()
+        extensionManager.setInteractive(False)
+        extName = "SlicerOpenAnatomy"
+        if extensionManager.isExtensionInstalled(extName):
+            return
+
+        success = extensionManager.installExtensionFromServer(extName, False, False)
+        if not success:
+            return
+
+        # If install was successful, load the open anatomy export module to be used by the exporter
+        moduleName = "OpenAnatomyExport"
+        modulePath = extensionManager.extensionModulePaths(extName)[0] + f"/{moduleName}.py"
+        factory = slicer.app.moduleManager().factoryManager()
+        factory.registerModule(qt.QFileInfo(modulePath))
+        factory.loadModules([moduleName])
 
     @staticmethod
     def isNNUNetModuleInstalled():

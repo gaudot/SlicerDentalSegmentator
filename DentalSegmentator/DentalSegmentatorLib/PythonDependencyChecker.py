@@ -8,7 +8,7 @@ import slicer
 from github import Github, GithubException
 
 
-def hasInternetConnection(timeOut_sec=1) -> bool:
+def hasInternetConnection(timeOut_sec=2) -> bool:
     """
     Check if user has access to the internet.
     """
