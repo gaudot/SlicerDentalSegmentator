@@ -32,7 +32,7 @@ We also deeply encourage you to use this badge when displaying models created wi
 
 [Here is a video tutorial](https://www.youtube.com/watch?v=BEG-XhjjiaY) showing the installation process and demonstrating the main capabilities of the extension.
 
-This extension is compatible with the latest latest 3D Slicer Preview Release (version 5.7.0 - rev32797, or later), downloadable [from the official website]( https://download.slicer.org/ ). 
+This extension is compatible with the latest 3D Slicer Stable Release (version 5.8.0, or later), downloadable [from the official website]( https://download.slicer.org/ ). 
 
 The plugin can be installed in Slicer using
 the [extension manager]( https://slicer.readthedocs.io/en/latest/user_guide/extensions_manager.html#install-extensions).
