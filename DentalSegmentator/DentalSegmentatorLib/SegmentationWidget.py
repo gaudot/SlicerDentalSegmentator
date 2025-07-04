@@ -421,11 +421,12 @@ class SegmentationWidget(qt.QWidget):
 
     def _postProcessSegments(self):
         """
-        Runs Island keep largest, and remove small islands on Maxilla, upper and lower teeth.
+        Remove small islands on all segments except mandibular canals.
         """
 
         self.onProgressInfo("Post processing results...")
-        self._keepLargestIsland("Segment_1")
+        self._removeSmallIsland("Segment_1")
+        self._removeSmallIsland("Segment_2")
         self._removeSmallIsland("Segment_3")
         self._removeSmallIsland("Segment_4")
         self.onProgressInfo("Post processing done.")
