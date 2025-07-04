@@ -83,7 +83,7 @@ class PythonDependencyChecker:
             don't match the ones on the GitHub page. False otherwise.
         """
         if not self.getWeightDownloadInfoPath().exists():
-            return True
+            return self.areWeightsMissing()
 
         if not self.hasInternetConnectionF():
             return False
@@ -166,5 +166,4 @@ class PythonDependencyChecker:
             f.extractall(self.destWeightFolder)
 
     def writeDownloadInfoURL(self, download_url):
-        with open(self.destWeightFolder / "download_info.json", "w") as f:
-            f.write(json.dumps({"download_url": download_url}))
+        self.getWeightDownloadInfoPath().write_text(json.dumps({"download_url": download_url}))

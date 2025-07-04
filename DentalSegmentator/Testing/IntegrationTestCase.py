@@ -1,3 +1,4 @@
+import os
 from unittest.mock import MagicMock
 
 import slicer
@@ -38,6 +39,12 @@ class IntegrationTestCase(DentalSegmentatorTestCase):
         self.assertTrue(self.deps.downloadWeights(self.mockProgressCallback))
         self.deps.writeDownloadInfoURL("outdated_url")
         self.deps.hasInternetConnectionF = self.noConnectionF
+        self.assertFalse(self.deps.areWeightsMissing())
+        self.assertFalse(self.deps.areWeightsOutdated())
+
+    def test_given_weights_and_no_download_url_weights_are_up_to_date(self):
+        self.assertTrue(self.deps.downloadWeights(self.mockProgressCallback))
+        os.remove(self.deps.getWeightDownloadInfoPath())
         self.assertFalse(self.deps.areWeightsMissing())
         self.assertFalse(self.deps.areWeightsOutdated())
 
