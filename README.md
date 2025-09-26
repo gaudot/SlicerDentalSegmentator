@@ -86,6 +86,14 @@ The `Surface smoothing` slider allows to change the 3D view surface smoothing al
 
 ## Troubleshooting
 
+### General troubleshooting steps
+
+- Verify that the PyTorch extension is installed and functional
+- Confirm that the model files are present in the expected location
+- Restart Slicer and reload the module after install
+- Test with the sample data provided in the repository
+- Review the logs for Python errors or missing dependencies
+
 ### MacOS GPU acceleration
 
 Due to an ongoing issue with Mac devices and Pytorch, GPU acceleration is not available for now on those devices.
