@@ -9,8 +9,22 @@ DentalSegmentator is an open-source deep learning extension for **automatic mult
 </p>
 
 <p align="center">
-  <b>Open-source · Deep Learning · Fully Automatic · Head CT & CBCT</b>
+  <b>Open-source · Deep Learning · Fully Automatic · Head and Dental CT & CBCT</b>
 </p>
+
+---
+
+## Table of Contents
+
+- [Key Features](#-key-features)
+- [The DentalSegmentator Model](#-the-dentalsegmentator-model)
+- [Getting Started](#-getting-started)
+- [Scientific Validation](#-scientific-validation)
+- [Research Applications](#-research-applications)
+- [Troubleshooting](#️-troubleshooting)
+- [Command-Line Interface](#-command-line-interface)
+- [Contributing](#-contributing)
+- [Acknowledgments](#acknowledgments)
 
 ---
 
@@ -203,37 +217,40 @@ The following publications illustrate some of its potential applications.
 
 ### Quantification of Root Resorption
 
-- Bespalez-Neto R, et al. Quantifying Root Resorption on the Incisors After Clear Aligner and Fixed Appliance Therapy Using Artificial Intelligence Tool Based CBCT Surface Models: Randomized Clinical Trial. *Orthodontics & Craniofacial Research*. 2026;29(2):366–374.
-  https://doi.org/10.1111/ocr.70082
+> Bespalez-Neto R, et al. Quantifying Root Resorption on the Incisors After Clear Aligner and Fixed Appliance Therapy Using Artificial Intelligence Tool Based CBCT Surface Models: Randomized Clinical Trial. *Orthodontics & Craniofacial Research*. 2026;29(2):366–374.
+>  https://doi.org/10.1111/ocr.70082
 
-- Taneja S, et al. Evaluation of orthodontically induced inflammatory root resorption (OIIRR) in adolescent patients with class II malocclusion undergoing treatment with rigid and hybrid fixed functional appliances: a randomized clinical trial. *Clinical Oral Investigations*. 2026;30.
-  https://doi.org/10.1007/s00784-026-06482-1
+> Taneja S, et al. Evaluation of orthodontically induced inflammatory root resorption (OIIRR) in adolescent patients with class II malocclusion undergoing treatment with rigid and hybrid fixed functional appliances: a randomized clinical trial. *Clinical Oral Investigations*. 2026;30.
+>  https://doi.org/10.1007/s00784-026-06482-1
 
 ### Guided Tooth Autotransplantation
 
-- Salviati M, et al. A novel full digital workflow for dental autotransplantation: surgical accuracy and clinical outcomes in a prospective cohort study. *Frontiers in Oral Health*. 2026;7.
-  https://doi.org/10.3389/froh.2026.1554101
+> Salviati M, et al. A novel full digital workflow for dental autotransplantation: surgical accuracy and clinical outcomes in a prospective cohort study. *Frontiers in Oral Health*. 2026;7.
+>  https://doi.org/10.3389/froh.2026.1554101
 
-- Chen G, et al. Evaluation of the Effectiveness of an AI-assisted, Dual-Template Workflow in Improving the Accuracy of Tooth Autotransplantation. *International Dental Journal*. 2026;76(3):109460.
-  https://doi.org/10.1016/j.identj.2026.109460
+> Chen G, et al. Evaluation of the Effectiveness of an AI-assisted, Dual-Template Workflow in Improving the Accuracy of Tooth Autotransplantation. *International Dental Journal*. 2026;76(3):109460.
+>  https://doi.org/10.1016/j.identj.2026.109460
 
 ### Condylar Volume & TMJ Anatomy
 
-- Jia W, et al. Fully automated evaluation of condylar remodeling after orthognathic surgery in skeletal class II patients using deep learning and landmarks. *Journal of Dentistry*. 2025;159:105819.
+> Jia W, et al. Fully automated evaluation of condylar remodeling after orthognathic surgery in skeletal class II patients using deep learning and landmarks. *Journal of Dentistry*. 2025;159:105819.
+> https://doi.org/10.1016/j.jdent.2025.105819
 
-- Oğuz F, et al. Evaluation of Condylar and Airway Volume in Skeletal Class I Patients with Different Vertical Growth Patterns. *Applied Sciences*. 2025;15(5):2794.
+> Oğuz F, et al. Evaluation of Condylar and Airway Volume in Skeletal Class I Patients with Different Vertical Growth Patterns. *Applied Sciences*. 2025;15(5):2794.
+> https://doi.org/10.3390/app15052794
 
-- Oğuz F, Özden S. Three-Dimensional Evaluation of TMJ Morphology in Individuals with Maxillary or Mandibular Impacted Canines: A CBCT-Based Retrospective Study. *Diagnostics*. 2026;16(3):496.
+> Oğuz F, Özden S. Three-Dimensional Evaluation of TMJ Morphology in Individuals with Maxillary or Mandibular Impacted Canines: A CBCT-Based Retrospective Study. *Diagnostics*. 2026;16(3):496.
+> https://doi.org/10.3390/diagnostics16030496
 
 ### Guided Endodontics
 
-- Zhang Y, et al. EndoPlanner: An adaptive planning framework for root canal therapy with graph-based endodontic landmark detection and inference-time refinement. *Medical Image Analysis*. 2027;115:104294.
-  https://doi.org/10.1016/j.media.2026.104294
+> Zhang Y, et al. EndoPlanner: An adaptive planning framework for root canal therapy with graph-based endodontic landmark detection and inference-time refinement. *Medical Image Analysis*. 2027;115:104294.
+> https://doi.org/10.1016/j.media.2026.104294
 
 ### Orbital Surgery Planning
 
-- Zhang C, et al. SlicerOrbitSurgerySim: An Open-Source Platform for Virtual Registration and Quantitative Comparison of Preformed Orbital Plates. *Journal of Oral and Maxillofacial Surgery*. 2026;84:1614–1621.
-  https://doi.org/10.1016/j.joms.2026.04.020
+> Zhang C, et al. SlicerOrbitSurgerySim: An Open-Source Platform for Virtual Registration and Quantitative Comparison of Preformed Orbital Plates. *Journal of Oral and Maxillofacial Surgery*. 2026;84:1614–1621.
+> https://doi.org/10.1016/j.joms.2026.04.020
 
 ---
 
