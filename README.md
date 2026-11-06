@@ -45,6 +45,8 @@ DentalSegmentator automatically generates five anatomical segmentations from a s
 - **Open source:** Integrated directly into 3D Slicer.
 - **Research-ready:** Segmentation results can be refined, visualized, and exported for further analysis.
 
+---
+
 ## 🧠 The DentalSegmentator Model
 
 DentalSegmentator is based on the **[nnU-Net](https://github.com/MIC-DKFZ/nnUNet) framework**, a self-configuring deep learning framework for biomedical image segmentation.
