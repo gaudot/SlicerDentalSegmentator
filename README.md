@@ -8,27 +8,23 @@ DentalSegmentator is an open-source deep learning extension for **automatic mult
   <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/1.png" width="85%" alt="DentalSegmentator interface in 3D Slicer"/>
 </p>
 
-<p align="center">
-  <b>Open-source · Deep Learning · Fully Automatic · Head and Dental CT & CBCT</b>
-</p>
-
 ---
 
 ## Table of Contents
 
 - [Key Features](#-key-features)
-- [The DentalSegmentator Model](#-the-dentalsegmentator-model)
+- [DentalSegmentator Model](#-dentalsegmentator-model)
 - [Getting Started](#-getting-started)
 - [Scientific Validation](#-scientific-validation)
-- [Research Applications](#-research-applications)
+- [Research Applications Examples](#-research-applications-examples)
 - [Troubleshooting](#️-troubleshooting)
 - [Command-Line Interface](#-command-line-interface)
 - [Contributing](#-contributing)
-- [Acknowledgments](#acknowledgments)
+- [Acknowledgments](#-acknowledgments)
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 DentalSegmentator automatically generates five anatomical segmentations from a single CT or CBCT volume:
 - Maxilla & Upper Skull
@@ -47,7 +43,7 @@ DentalSegmentator automatically generates five anatomical segmentations from a s
 
 ---
 
-## 🧠 The DentalSegmentator Model
+## DentalSegmentator Model
 
 DentalSegmentator is based on the **[nnU-Net](https://github.com/MIC-DKFZ/nnUNet) framework**, a self-configuring deep learning framework for biomedical image segmentation.
 
@@ -79,7 +75,7 @@ We also strongly encourage you to use the following badge when displaying models
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Requirements
 
@@ -173,7 +169,7 @@ Available options include:
 
 ---
 
-## 📊 Scientific Validation
+## Scientific Validation
 
 Since its initial publication, DentalSegmentator has been evaluated in several independent research studies addressing different anatomical structures and clinical research applications.
 
@@ -207,7 +203,7 @@ In an ex vivo pilot study, DentalSegmentator demonstrated similar tooth segmenta
 
 ---
 
-## 🔬 Research Applications
+## Research Applications Examples
 
 DentalSegmentator can support a wide range of clinical and translational research projects involving dental and craniofacial imaging.
 
@@ -252,7 +248,7 @@ The following publications illustrate some of its potential applications.
 
 ---
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 ### General Troubleshooting
 
@@ -289,7 +285,7 @@ To resolve this issue:
 2. Uninstall the currently installed version of PyTorch.
 3. Install PyTorch again, selecting the `Computation backend` compatible with your hardware.
 
-⚠️ **Important:** PyTorch version must be greater than `2.0.0` for nnU-Net compatibility.
+**Important:** PyTorch version must be greater than `2.0.0` for nnU-Net compatibility.
 
 <p align="center">
   <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/7.png" width="400" alt="PyTorch Utils configuration"/>
@@ -323,23 +319,19 @@ If the model weights cannot be downloaded or installed automatically, they can b
 
 ---
 
-## 💻 Command-Line Interface
+## Command-Line Interface
 
 DentalSegmentator can also be used independently of the 3D Slicer graphical interface through the nnU-Net command-line interface.
 
-The pretrained model is available on Zenodo:
-
-👉 [Download the pretrained model from Zenodo](https://zenodo.org/doi/10.5281/zenodo.10829674)
+The pretrained model is available on Zenodo: [Download the pretrained model from Zenodo](https://zenodo.org/doi/10.5281/zenodo.10829674)
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions from the community are welcome!
 
-If you are interested in improving DentalSegmentator, reporting issues, or contributing new features, please refer to our contribution guidelines:
-
-👉 [CONTRIBUTING.md](CONTRIBUTING.md)
+If you are interested in improving DentalSegmentator, reporting issues, or contributing new features, please refer to our contribution guidelines: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
 
