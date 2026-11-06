@@ -188,14 +188,14 @@ DentalSegmentator has demonstrated reliability in segmenting multiple impacted t
 
 ### Mandibular Canal Segmentation
 
-High reliability has been demonstrated for mandibular canal segmentation.
+High reliability has been demonstrated for mandibular canal segmentation with DentalSegmentator.
 
 > Shujaat S, et al. Comparative analysis of five AI platforms for mandibular canal segmentation on CBCT images. *Journal of Dentistry*. 2026;166:106345.
 > https://doi.org/10.1016/j.jdent.2026.106345
 
 ### Facial Skeletal Surface Models
 
-An ex vivo study demonstrated high accuracy for facial bone segmentation across diverse CT and CBCT acquisition settings, including ultra-low-dose CBCT.
+An ex vivo study demonstrated high accuracy of DentalSegmentator for facial bone segmentation across diverse CT and CBCT acquisition settings, including ultra-low-dose CBCT.
 
 > Gkantidis N, et al. Accuracy and generalizability of an open-source deep learning model for facial bone segmentation on CT and CBCT scans: An ex vivo study. *Journal of Dentistry*. 2026;170:106663.
 > https://doi.org/10.1016/j.jdent.2026.106663
