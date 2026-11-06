@@ -17,7 +17,7 @@ DentalSegmentator is an open-source deep learning extension for **automatic mult
 - [Getting Started](#getting-started)
 - [Scientific Validation](#scientific-validation)
 - [Research Applications Examples](#research-applications-examples)
-- [Troubleshooting](#️Troubleshooting)
+- [Troubleshooting](#troubleshooting)
 - [Command-Line Interface](#command-line-interface)
 - [Contributing](#contributing)
 - [Acknowledgments](#acknowledgments)
