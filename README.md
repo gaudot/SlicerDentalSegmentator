@@ -1,6 +1,6 @@
 # Slicer DentalSegmentator
 
-**Fully automatic AI-powered segmentation of dental CT and CBCT images in 3D Slicer.**
+**Fully automatic AI-powered segmentation of Head and Dental CT and CBCT images in 3D Slicer.**
 
 DentalSegmentator is an open-source deep learning extension for **automatic multiclass segmentation of dento-maxillo-facial CT and CBCT scans**. Built on the nnU-Net framework, it provides robust segmentation of dental and craniofacial anatomical structures, regardless of the scan field of view.
 
