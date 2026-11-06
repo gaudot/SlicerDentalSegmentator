@@ -193,14 +193,14 @@ High reliability has been demonstrated for mandibular canal segmentation with De
 > Shujaat S, et al. Comparative analysis of five AI platforms for mandibular canal segmentation on CBCT images. *Journal of Dentistry*. 2026;166:106345.
 > https://doi.org/10.1016/j.jdent.2026.106345
 
-### Facial Skeletal Surface Models
+### Facial Skeletal Surface Models (ex vivo study)
 
 An ex vivo study demonstrated high accuracy of DentalSegmentator for facial bone segmentation across diverse CT and CBCT acquisition settings, including ultra-low-dose CBCT.
 
 > Gkantidis N, et al. Accuracy and generalizability of an open-source deep learning model for facial bone segmentation on CT and CBCT scans: An ex vivo study. *Journal of Dentistry*. 2026;170:106663.
 > https://doi.org/10.1016/j.jdent.2026.106663
 
-### Tooth Segmentation 
+### Tooth Segmentation (ex vivo study)
 
 In an ex vivo pilot study, DentalSegmentator demonstrated similar tooth segmentation trueness to commercial solutions.
 
