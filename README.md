@@ -1,172 +1,354 @@
-# Slicer DentalSegmentator 
+# Slicer DentalSegmentator
 
-3D Slicer extension for fully-automatic segmentation of CT and CBCT dental volumes.
+**Fully automatic AI-powered segmentation of dental CT and CBCT images in 3D Slicer.**
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/1.png" width="700"/>
+DentalSegmentator is an open-source deep learning extension for **automatic multiclass segmentation of dento-maxillo-facial CT and CBCT scans**. Built on the nnU-Net framework, it provides robust segmentation of dental and craniofacial anatomical structures, regardless of the scan field of view.
 
-After loading and selecting the volume to process, this module generates the following segmentations: 
+<p align="center">
+  <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/1.png" width="85%" alt="DentalSegmentator interface in 3D Slicer"/>
+</p>
+
+<p align="center">
+  <b>Open-source · Deep Learning · Fully Automatic · Head CT & CBCT</b>
+</p>
+
+---
+
+## ✨ Key Features
+
+DentalSegmentator automatically generates five anatomical segmentations from a single CT or CBCT volume:
 - Maxilla & Upper Skull
 - Mandible
 - Upper Teeth
 - Lower Teeth
-- Mandibular canal
+- Mandibular Canal 
 
-## DentalSegmentator Model
+**Why DentalSegmentator?**
 
-DentalSegmentator is based on the nnU-Net framework. It has been trained on 470 dento-maxillo-facial CT and CBCT scans and evaluated on a hold-out test dataset of 256 CT and CBCT scans from 7 institutions. 
+- **Fully automatic:** No manual initialization or annotation required.
+- **Multiclass segmentation:** Multiple anatomical structures segmented in a single workflow.
+- **Robust performance:** Evaluated across diverse CT and CBCT datasets.
+- **Open source:** Integrated directly into 3D Slicer.
+- **Research-ready:** Segmentation results can be refined, visualized, and exported for further analysis.
 
-The results obtained on our highly diversified dataset demonstrate that our tool can provide fully automatic and robust multiclass segmentation for dento-maxillo-facial (CB)CT scans, independently of the field of view of the scan.
+## 🧠 The DentalSegmentator Model
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/dentalsegmentator_example.png" width="500"/>
+DentalSegmentator is based on the **[nnU-Net](https://github.com/MIC-DKFZ/nnUNet) framework**, a self-configuring deep learning framework for biomedical image segmentation.
 
-If you use DentalSegmentator for your work, please cite our paper and nnU-Net:
+### Training & Evaluation
 
-> Dot G, et al. DentalSegmentator: robust open source deep learning-based CT and CBCT image segmentation. Journal of Dentistry (2024) doi:[10.1016/j.jdent.2024.105130](https://doi.org/10.1016/j.jdent.2024.105130)
+- **Training dataset:** 470 dento-maxillo-facial CT and CBCT scans.
+- **Independent evaluation:** 256 CT and CBCT scans.
+- **Data diversity:** Test data collected from 7 different institutions.
 
-> Isensee F, et al. nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation. Nat Methods. 2021;18(2):203-211. doi:[10.1038/s41592-020-01008-z](https://doi.org/10.1038/s41592-020-01008-z)
+Results obtained on this highly diversified dataset demonstrate robust, fully automatic multiclass segmentation of dento-maxillo-facial CT and CBCT scans, independently of the field of view.
 
-We also strongly encourage you to use this badge when displaying models created with this extension:
+<p align="center">
+  <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/dentalsegmentator_example.png" width="70%" alt="DentalSegmentator segmentation examples"/>
+</p>
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/badge_dentalsegmentator.png" width="200"/>
+If you use DentalSegmentator in your research, please cite the following publications:
 
-## Using the Extension
+**DentalSegmentator**
 
-[Watch the video tutorial](https://www.youtube.com/watch?v=BEG-XhjjiaY) for a walkthrough of the installation process and a demonstration of the extension's main capabilities.
+> Dot G, et al. DentalSegmentator: robust open source deep learning-based CT and CBCT image segmentation. *Journal of Dentistry* (2024).
+> https://doi.org/10.1016/j.jdent.2024.105130
 
-This extension is compatible with the latest 3D Slicer Stable Release (version 5.8.0 or later), downloadable [from the official website](https://download.slicer.org/). 
+**nnU-Net**
 
-The plugin can be installed in Slicer using the [Extension Manager](https://slicer.readthedocs.io/en/latest/user_guide/extensions_manager.html#install-extensions). Search for "DentalSegmentator" in the search bar.
+> Isensee F, et al. nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation. *Nature Methods*. 2021;18(2):203–211.
+> https://doi.org/10.1038/s41592-020-01008-z
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/extension_manager.png" width="200" />
+We also strongly encourage you to use the following badge when displaying models generated with this extension:
 
-After installation and restarting Slicer, the extension can be found in the module file explorer under `Segmentation > DentalSegmentator`, or by using the search module button and typing `DentalSegmentator`.
+<p align="center">
+  <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/badge_dentalsegmentator.png" width="200" alt="DentalSegmentator badge"/>
+</p>
 
-### Quick Start Guide
+---
 
-1. **Load Data**: Load a dental CT or CBCT by drag-and-dropping the data into 3D Slicer or by using the `DATA` or `DCM` load buttons. 
-   *(To test the extension quickly, you can use 3D Slicer's `CBCT Dental Surgery` volumes found in the `Sample Data` module).*
-2. **Select Module**: Switch to the `DentalSegmentator` module and select your volume in the first dropdown menu.
-3. **Run Segmentation**: Click the `Apply` button to start the segmentation.
+## 🚀 Getting Started
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/4.png" width="300" />
+### 1. Requirements
 
-During the first launch, the module's dependencies will be installed automatically. These include:
-- The AI model weights
+DentalSegmentator is compatible with:
+
+- **[3D Slicer](https://download.slicer.org/):** Version 5.8.0 or later (latest stable release).
+- **Input data:** Head or Dental CT or CBCT volumes.
+
+### 2. Installation
+
+The extension can be installed directly from the 3D Slicer Extension Manager.
+
+1. Download and launch [3D Slicer](https://download.slicer.org/).
+2. Open the [Extension Manager](https://slicer.readthedocs.io/en/latest/user_guide/extensions_manager.html#install-extensions).
+3. Search for `DentalSegmentator`.
+4. Install the extension.
+5. Restart 3D Slicer.
+
+After restarting, you can access the extension through:
+
+`Segmentation → DentalSegmentator`
+
+Alternatively, use the module search button and type `DentalSegmentator`.
+
+### 3. Quick Start Guide
+
+Getting started takes just a few steps:
+
+**Step 1 — Load your data**
+
+Load a dental CT or CBCT volume into 3D Slicer using drag-and-drop or the `DATA` / `DCM` buttons.
+
+💡 *Want to try the extension without importing your own data? Use the CBCT Dental Surgery sample volumes available in the 3D Slicer Sample Data module.*
+
+**Step 2 — Select the module**
+
+Navigate to the `DentalSegmentator` module and select your input volume from the first dropdown menu.
+
+**Step 3 — Run segmentation**
+
+Click `Apply` to launch the automatic segmentation.
+
+<p align="center">
+  <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/4.png" width="400" alt="DentalSegmentator module and Apply button"/>
+</p>
+
+### 4. First-Time Setup & Processing
+
+During the first launch, the module automatically installs its required dependencies, including:
+
+- AI model weights
 - PyTorch Lightning
 - PyTorch
 - nnU-Net v2
 
-Once installed, the volume is transferred and processed by the nnU-Net v2 library. If your device does not include CUDA, processing may take a significant amount of time, and a confirmation dialog will appear before starting.
+Once installed, the input volume is transferred to the nnU-Net v2 library for processing.
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/dentalsegmentator_run.gif"/>
+**GPU acceleration:** CUDA-compatible devices can accelerate inference. If CUDA is unavailable, processing may take significantly longer. A confirmation dialog will appear before starting CPU-based processing.
 
-During execution, processing can be canceled using the `Stop` button, and progress can be monitored in the console logs.
+<p align="center">
+  <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/dentalsegmentator_run.gif" width="85%" alt="DentalSegmentator segmentation process"/>
+</p>
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/5.png" width="300"/>
+During processing:
 
-### Post-Processing & Export
+- Click `Stop` to cancel the segmentation.
+- Monitor processing progress through the console logs.
 
-Once complete, the segmentation is loaded into the application and can be refined using the `Segment Editor` tools.
+<p align="center">
+  <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/5.png" width="400" alt="DentalSegmentator processing interface"/>
+</p>
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/dentalsegmentator_3dmodel.gif"/>
+### 5. Post-Processing & Export
 
-- **Export**: Use the `Export segmentation` menu to select your desired export format.
-- **Surface Smoothing**: Adjust the `Surface smoothing` slider to modify the 3D view surface smoothing algorithm.
+Once segmentation is complete, the results are automatically loaded into 3D Slicer.
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/6.png" width="300"/>
+You can further refine the segmentation using the built-in **Segment Editor** tools.
 
-## Model Evaluation
+<p align="center">
+  <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/dentalsegmentator_3dmodel.gif" width="85%" alt="3D anatomical models generated by DentalSegmentator"/>
+</p>
 
-**Multiple Impacted Teeth**: DentalSegmentator has been shown to be reliable to segment multiple impacted teeth, with or without association to rare diseases.
-  > Sinard E, Gajny L, de La Dure-Molla M, Felizardo R, Dot G. Automated Cone Beam Computed Tomography Segmentation of Multiple Impacted Teeth With or Without Association to Rare Diseases: Evaluation of Four Deep Learning-Based Methods. *Orthod Craniofac Res.* 2025;28(3):433-440. doi:[10.1111/ocr.12890](https://doi.org/10.1111/ocr.12890)
+Available options include:
 
-**Mandibular Canal**: DentalSegmentator has been shown to be highly reliable for mandibular canal segmentation.
-  > Shujaat S, et al. Comparative analysis of five AI platforms for mandibular canal segmentation on CBCT images. *J Dent.* 2026;166:106345. doi:[10.1016/j.jdent.2026.106345](https://doi.org/10.1016/j.jdent.2026.106345)
+- **Export segmentation:** Choose your preferred export format using the `Export segmentation` menu.
+- **Surface smoothing:** Adjust the `Surface smoothing` slider to modify the smoothing algorithm applied to the 3D surface representation.
 
-**Facial Skeletal Surface Models**: DentalSegmentator has been shown to provide highly accurate facial skeletal surface models across diverse CT and CBCT settings (including ultra-low dose CBCT) in an ex vivo study.
-  > Gkantidis N, Ghamri M, Dot G. Accuracy and generalizability of an open-source deep learning model for facial bone segmentation on CT and CBCT scans: An ex vivo study. *J Dent.* 2026;170:106663. doi:[10.1016/j.jdent.2026.106663](https://doi.org/10.1016/j.jdent.2026.106663)
+<p align="center">
+  <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/6.png" width="400" alt="Segmentation export and surface smoothing options"/>
+</p>
 
-**Tooth Segmentation Trueness**: DentalSegmentator has shown a similar trueness to that of commercial solutions for tooth segmentation in an ex vivo pilot study.
-  > Reymus M, et al. Trueness of artificial intelligence-driven CBCT tooth segmentation: A comparative validation ex vivo pilot study. *J Dent.* 2026;169:106613. doi:[10.1016/j.jdent.2026.106613](https://doi.org/10.1016/j.jdent.2026.106613)
+---
 
-## Use Cases Examples
+## 📊 Scientific Validation
 
-Without any exhaustivity, here are some use cases examples of DentalSegmentator to assist clinical research.
+DentalSegmentator has been evaluated in several independent research studies addressing different anatomical structures and clinical research applications.
 
-**Quantification of root resorptions**
-  > Bespalez-Neto R, et al. Quantifying Root Resorption on the Incisors After Clear Aligner and Fixed Appliance Therapy Using Artificial Intelligence Tool Based CBCT Surface Models: Randomized Clinical Trial. *Orthod Craniofac Res.* 2026;29(2):366–374. doi:[10.1111/ocr.70082](https://doi.org/10.1111/ocr.70082)
+### Impacted Teeth
 
-  > Taneja S, Batra P, Talwar A, Singla A, Srivastava M. Evaluation of orthodontically induced inflammatory root resorption (OIIRR) in adolescent patients with class II malocclusion undergoing treatment with rigid and hybrid fixed functional appliances: a randomized clinical trial. *Clin Oral Invest.* 2026;30. doi:[10.1007/s00784-026-06482-1](https://doi.org/10.1007/s00784-026-06482-1)
+DentalSegmentator has demonstrated reliability in segmenting multiple impacted teeth, including cases associated with rare diseases.
 
-**Segmentation of CBCT scans for guided tooth autotransplantation**
-  > Salviati M, et al. A novel full digital workflow for dental autotransplantation: surgical accuracy and clinical outcomes in a prospective cohort study. *Front Oral Health.* 2026;7. doi:[10.3389/froh.2026.1554101](https://doi.org/10.3389/froh.2026.1554101)
+> Sinard E, et al. Automated Cone Beam Computed Tomography Segmentation of Multiple Impacted Teeth With or Without Association to Rare Diseases: Evaluation of Four Deep Learning-Based Methods. *Orthodontics & Craniofacial Research*. 2025;28(3):433–440.
+> https://doi.org/10.1111/ocr.12890
 
-  > Chen G, et al. Evaluation of the Effectiveness of an AI-assisted, Dual-Template Workflow in Improving the Accuracy of Tooth Autotransplantation. *Int Dent J.* 2026;76(3):109460. doi:[10.1016/j.identj.2026.109460](https://doi.org/10.1016/j.identj.2026.109460)
+### Mandibular Canal Segmentation
 
-**Assess condylar volume and TMJ anatomy**
-  > Jia W, et al. Fully automated evaluation of condylar remodeling after orthognathic surgery in skeletal class II patients using deep learning and landmarks. *J Dent.* 2025;159:105819. doi:[10.1016/j.jdent.2025.105819](https://doi.org/10.1016/j.jdent.2025.105819)
+High reliability has been demonstrated for mandibular canal segmentation.
 
-  > Oğuz F, Bor S, Khanmohammadi A, Kıranşal M. Evaluation of Condylar and Airway Volume in Skeletal Class I Patients with Different Vertical Growth Patterns. *Appl Sci.* 2025;15(5):2794. doi:[10.3390/app15052794](https://doi.org/10.3390/app15052794)
+> Shujaat S, et al. Comparative analysis of five AI platforms for mandibular canal segmentation on CBCT images. *Journal of Dentistry*. 2026;166:106345.
+> https://doi.org/10.1016/j.jdent.2026.106345
 
-  > Oğuz F, Özden S. Three-Dimensional Evaluation of TMJ Morphology in Individuals with Maxillary or Mandibular Impacted Canines: A CBCT-Based Retrospective Study. *Diagnostics.* 2026;16(3):496. doi:[10.3390/diagnostics16030496](https://doi.org/10.3390/diagnostics16030496)
+### Facial Skeletal Surface Models
 
-**Assist guided endodontics**
-  > Zhang Y, Kong F, Wang K, Huang Z, Chen X. EndoPlanner: An adaptive planning framework for root canal therapy with graph-based endodontic landmark detection and inference-time refinement. *Med Image Anal.* 2027;115:104294. doi:[10.1016/j.media.2026.104294](https://doi.org/10.1016/j.media.2026.104294)
+An ex vivo study demonstrated high accuracy for facial bone segmentation across diverse CT and CBCT acquisition settings, including ultra-low-dose CBCT.
 
-**Assist the preparation and evaluation of orbital surgery plates**
-  > Zhang C, Gunn B, Read-Fuller AM. SlicerOrbitSurgerySim: An Open-Source Platform for Virtual Registration and Quantitative Comparison of Preformed Orbital Plates. *J Oral Maxillofac Surg.* 2026;84:1614–1621. doi:[10.1016/j.joms.2026.04.020](https://doi.org/10.1016/j.joms.2026.04.020)
+> Gkantidis N, et al. Accuracy and generalizability of an open-source deep learning model for facial bone segmentation on CT and CBCT scans: An ex vivo study. *Journal of Dentistry*. 2026;170:106663.
+> https://doi.org/10.1016/j.jdent.2026.106663
 
-## Troubleshooting
+### Tooth Segmentation 
 
-### General Troubleshooting Steps
-- Verify that the PyTorch extension is installed and functional.
-- Confirm that the model files are present in the expected location.
-- Restart Slicer and reload the module after installation.
-- Test with the sample data provided in the repository.
-- Review the logs for Python errors or missing dependencies.
+In an ex vivo pilot study, DentalSegmentator demonstrated similar tooth segmentation trueness to commercial solutions.
 
-### macOS GPU Acceleration
+> Reymus M, et al. Trueness of artificial intelligence-driven CBCT tooth segmentation: A comparative validation ex vivo pilot study. *Journal of Dentistry*. 2026;169:106613.
+> https://doi.org/10.1016/j.jdent.2026.106613
+
+---
+
+## 🔬 Research Applications
+
+DentalSegmentator can support a wide range of clinical and translational research projects involving dental and craniofacial imaging.
+
+The following publications illustrate some of its potential applications.
+
+### Quantification of Root Resorption
+
+- Bespalez-Neto R, et al. Quantifying Root Resorption on the Incisors After Clear Aligner and Fixed Appliance Therapy Using Artificial Intelligence Tool Based CBCT Surface Models: Randomized Clinical Trial. *Orthodontics & Craniofacial Research*. 2026;29(2):366–374.
+  https://doi.org/10.1111/ocr.70082
+
+- Taneja S, et al. Evaluation of orthodontically induced inflammatory root resorption (OIIRR) in adolescent patients with class II malocclusion undergoing treatment with rigid and hybrid fixed functional appliances: a randomized clinical trial. *Clinical Oral Investigations*. 2026;30.
+  https://doi.org/10.1007/s00784-026-06482-1
+
+### Guided Tooth Autotransplantation
+
+- Salviati M, et al. A novel full digital workflow for dental autotransplantation: surgical accuracy and clinical outcomes in a prospective cohort study. *Frontiers in Oral Health*. 2026;7.
+  https://doi.org/10.3389/froh.2026.1554101
+
+- Chen G, et al. Evaluation of the Effectiveness of an AI-assisted, Dual-Template Workflow in Improving the Accuracy of Tooth Autotransplantation. *International Dental Journal*. 2026;76(3):109460.
+  https://doi.org/10.1016/j.identj.2026.109460
+
+### Condylar Volume & TMJ Anatomy
+
+- Jia W, et al. Fully automated evaluation of condylar remodeling after orthognathic surgery in skeletal class II patients using deep learning and landmarks. *Journal of Dentistry*. 2025;159:105819.
+
+- Oğuz F, et al. Evaluation of Condylar and Airway Volume in Skeletal Class I Patients with Different Vertical Growth Patterns. *Applied Sciences*. 2025;15(5):2794.
+
+- Oğuz F, Özden S. Three-Dimensional Evaluation of TMJ Morphology in Individuals with Maxillary or Mandibular Impacted Canines: A CBCT-Based Retrospective Study. *Diagnostics*. 2026;16(3):496.
+
+### Guided Endodontics
+
+- Zhang Y, et al. EndoPlanner: An adaptive planning framework for root canal therapy with graph-based endodontic landmark detection and inference-time refinement. *Medical Image Analysis*. 2027;115:104294.
+  https://doi.org/10.1016/j.media.2026.104294
+
+### Orbital Surgery Planning
+
+- Zhang C, et al. SlicerOrbitSurgerySim: An Open-Source Platform for Virtual Registration and Quantitative Comparison of Preformed Orbital Plates. *Journal of Oral and Maxillofacial Surgery*. 2026;84:1614–1621.
+  https://doi.org/10.1016/j.joms.2026.04.020
+
+---
+
+## 🛠️ Troubleshooting
+
+### General Troubleshooting
+
+If you encounter problems during installation or execution, we recommend the following steps:
+
+1. Verify that the PyTorch extension is installed and functional.
+2. Check that the model files are present in the expected directory.
+3. Restart 3D Slicer and reload the module.
+4. Test the extension using the sample data provided by 3D Slicer.
+5. Review the console logs for Python errors or missing dependencies.
+
+### macOS — GPU Acceleration
+
 Due to ongoing compatibility issues between macOS and PyTorch, GPU acceleration is currently unavailable on Apple Silicon/macOS devices.
 
-### Linux Processing Hang
-On Linux or WSL systems, inference may get stuck at the stage `"done with volume"`. This indicates an out-of-memory error. **32 GB of RAM is recommended** to run this extension. If you encounter this issue, creating a 16 GB SWAP file on an SSD should resolve the problem.
+### Linux / WSL — Processing Hang
 
-### Torch CUDA Not Properly Installed
-On Windows, the PyTorch CUDA dependency may occasionally fail to be detected and installed automatically. 
+On Linux or WSL systems, inference may get stuck at the `"done with volume"` stage.
 
-To fix this:
+This generally indicates an out-of-memory (OOM) error.
+
+**Recommended solution:**
+
+- A minimum of 32 GB RAM is recommended to run this extension.
+- If the problem persists, creating a 16 GB SWAP file on an SSD should resolve the issue.
+
+### Windows — CUDA Not Properly Installed
+
+In some cases, the PyTorch CUDA dependency may not be detected or installed automatically.
+
+To resolve this issue:
+
 1. Open the `PyTorch Utils` extension.
-2. Uninstall the current version of PyTorch.
-3. Install a new version of PyTorch by setting the `Computation backend` compatible with your hardware (PyTorch version must be greater than `2.0.0` for nnU-Net compatibility).
+2. Uninstall the currently installed version of PyTorch.
+3. Install PyTorch again, selecting the `Computation backend` compatible with your hardware.
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/7.png" width="300"/>
+⚠️ **Important:** PyTorch version must be greater than `2.0.0` for nnU-Net compatibility.
 
-### Failed to Download / Find Weights
-If the weights fail to install automatically, you can install them manually:
-1. Go to the [SlicerDentalSegmentator GitHub Releases page](https://github.com/gaudot/SlicerDentalSegmentator/releases) and download the latest `.zip` file from the release.
-2. Navigate to your `DentalSegmentator` folder (accessible via the module finder window).
+<p align="center">
+  <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/7.png" width="400" alt="PyTorch Utils configuration"/>
+</p>
 
-<img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/8.png" width="500"/>
+### Failed to Download or Find Model Weights
 
-3. Unzip the weights file into the `DentalSegmentator\Resources\ML` folder.
-4. Create a `download_info.json` file containing the path to the downloaded zip file for future reference:
-   ```json
-   {
-     "download_url": "[https://github.com/gaudot/SlicerDentalSegmentator/releases/download/v1.0.0-alpha/Dataset111_453CT_v100.zip](https://github.com/gaudot/SlicerDentalSegmentator/releases/download/v1.0.0-alpha/Dataset111_453CT_v100.zip)"
-   }
+If the model weights cannot be downloaded or installed automatically, they can be installed manually.
 
-## Command-line interface  
+**Manual installation:**
 
-If you want tu use DentalSegmentator via nnU-Net command-line interface use, [the pretrained model is available on Zenodo platform](https://zenodo.org/doi/10.5281/zenodo.10829674).
+1. Visit the [GitHub Releases page](https://github.com/gaudot/SlicerDentalSegmentator/releases).
+2. Download the latest `.zip` file from the release.
+3. Locate your `DentalSegmentator` folder using the module finder window.
 
-## Contributing
+<p align="center">
+  <img src="https://github.com/gaudot/SlicerDentalSegmentator/raw/main/Screenshots/8.png" width="65%" alt="DentalSegmentator model weights directory"/>
+</p>
 
-This project welcomes contributions. If you want more information about how you can contribute, please refer to
-the [CONTRIBUTING.md file](CONTRIBUTING.md).
+4. Extract the downloaded weights into:
 
-## Acknowledgments 
+   `DentalSegmentator/Resources/ML`
 
-Authors: G. Dot (Université Paris Cité, AP-HP, Arts-et-Métiers), L. Gajny (Arts-et-Métiers), R. Fenioux (Kitware SAS), T. Pelletier (Kitware SAS)
+5. Create a `download_info.json` file containing the download URL for future reference:
 
-Supported by the [FFO (Fédération Française d'Orthodontie)](https://orthodontie-ffo.org/) and the [Fondation des Gueules Cassées](https://www.gueules-cassees.asso.fr/).
+```json
+{
+  "download_url": "https://github.com/gaudot/SlicerDentalSegmentator/releases/download/v1.0.0-alpha/Dataset111_453CT_v100.zip"
+}
+```
 
+---
+
+## 💻 Command-Line Interface
+
+DentalSegmentator can also be used independently of the 3D Slicer graphical interface through the nnU-Net command-line interface.
+
+The pretrained model is available on Zenodo:
+
+👉 [Download the pretrained model from Zenodo](https://zenodo.org/doi/10.5281/zenodo.10829674)
+
+---
+
+## 🤝 Contributing
+
+Contributions from the community are welcome!
+
+If you are interested in improving DentalSegmentator, reporting issues, or contributing new features, please refer to our contribution guidelines:
+
+👉 [CONTRIBUTING.md](CONTRIBUTING.md)
+
+---
+
+## Acknowledgments
+
+**Authors**
+
+- G. Dot — Université Paris Cité, AP-HP, Arts-et-Métiers
+- L. Gajny — Arts-et-Métiers
+- R. Fenioux — Kitware SAS
+- T. Pelletier — Kitware SAS
+
+**Funding & Support**
+
+This project was supported by:
+
+- [FFO — Fédération Française d'Orthodontie](https://orthodontie-ffo.org/)
+- [Fondation des Gueules Cassées](https://www.gueules-cassees.asso.fr/)
+
+---
+
+<p align="center">
+  <b>DentalSegmentator</b><br/>
+  Open-source AI for dental and craniofacial image segmentation.
+  <br/><br/>
+  ⭐ If you find this project useful, consider giving it a star on GitHub!
+</p>
