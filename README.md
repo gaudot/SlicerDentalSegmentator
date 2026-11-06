@@ -63,12 +63,8 @@ Results obtained on this highly diversified dataset demonstrate robust, fully au
 
 If you use DentalSegmentator in your research, please cite the following publications:
 
-**DentalSegmentator**
-
 > Dot G, et al. DentalSegmentator: robust open source deep learning-based CT and CBCT image segmentation. *Journal of Dentistry* (2024).
 > https://doi.org/10.1016/j.jdent.2024.105130
-
-**nnU-Net**
 
 > Isensee F, et al. nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation. *Nature Methods*. 2021;18(2):203–211.
 > https://doi.org/10.1038/s41592-020-01008-z
@@ -177,7 +173,7 @@ Available options include:
 
 ## 📊 Scientific Validation
 
-DentalSegmentator has been evaluated in several independent research studies addressing different anatomical structures and clinical research applications.
+Since its initial publication, DentalSegmentator has been evaluated in several independent research studies addressing different anatomical structures and clinical research applications.
 
 ### Impacted Teeth
 
