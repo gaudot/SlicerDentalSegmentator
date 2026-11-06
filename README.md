@@ -12,15 +12,15 @@ DentalSegmentator is an open-source deep learning extension for **automatic mult
 
 ## Table of Contents
 
-- [Key Features](#-key-features)
-- [DentalSegmentator Model](#-dentalsegmentator-model)
-- [Getting Started](#-getting-started)
-- [Scientific Validation](#-scientific-validation)
-- [Research Applications Examples](#-research-applications-examples)
-- [Troubleshooting](#️-troubleshooting)
-- [Command-Line Interface](#-command-line-interface)
-- [Contributing](#-contributing)
-- [Acknowledgments](#-acknowledgments)
+- [Key Features](#key-features)
+- [DentalSegmentator Model](#dentalsegmentator-model)
+- [Getting Started](#getting-started)
+- [Scientific Validation](#scientific-validation)
+- [Research Applications Examples](#research-applications-examples)
+- [Troubleshooting](#️Troubleshooting)
+- [Command-Line Interface](#command-line-interface)
+- [Contributing](#contributing)
+- [Acknowledgments](#acknowledgments)
 
 ---
 
