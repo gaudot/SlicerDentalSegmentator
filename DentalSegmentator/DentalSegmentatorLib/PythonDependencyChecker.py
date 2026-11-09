@@ -5,7 +5,6 @@ from typing import Optional, Callable
 
 import qt
 import slicer
-from github import Github, GithubException
 
 
 def hasInternetConnection(timeOut_sec=2) -> bool:
@@ -45,15 +44,7 @@ class PythonDependencyChecker:
         self.repo_path = repoPath or "gaudot/SlicerDentalSegmentator"
         self.hasInternetConnectionF = hasInternetConnectionF or hasInternetConnection
         self.errorDisplay = errorDisplayF or slicer.util.errorDisplay
-
-    @classmethod
-    def areDependenciesSatisfied(cls):
-        try:
-            import torch
-            import nnunetv2
-            return True
-        except ImportError:
-            return False
+        self._ensurePipDependencies()
 
     def downloadWeightsIfNeeded(self, progressCallback):
         if self.areWeightsMissing():
@@ -71,11 +62,19 @@ class PythonDependencyChecker:
     def areWeightsMissing(self):
         return self.getDatasetPath() is None
 
-    def getLatestReleaseUrl(self):
-        g = Github()
-        repo = g.get_repo(self.repo_path)
-        assets = [asset for release in repo.get_releases() for asset in release.get_assets()]
-        return assets[0].browser_download_url
+    def getLatestReleaseUrl(self) -> str | None:
+        try:
+            from github import Github, GithubException
+        except ImportError:
+            return None
+
+        try:
+            g = Github()
+            repo = g.get_repo(self.repo_path)
+            assets = [asset for release in repo.get_releases() for asset in release.get_assets()]
+            return assets[0].browser_download_url
+        except GithubException:
+            return None
 
     def areWeightsOutdated(self) -> bool:
         """
@@ -88,10 +87,11 @@ class PythonDependencyChecker:
         if not self.hasInternetConnectionF():
             return False
 
-        try:
-            return self.getLastDownloadedWeights() != self.getLatestReleaseUrl()
-        except GithubException:
+        latestUrl = self.getLatestReleaseUrl()
+        if latestUrl is None:
             return False
+
+        return self.getLastDownloadedWeights() != latestUrl
 
     def getDestWeightFolder(self):
         return self.destWeightFolder
@@ -167,3 +167,22 @@ class PythonDependencyChecker:
 
     def writeDownloadInfoURL(self, download_url):
         self.getWeightDownloadInfoPath().write_text(json.dumps({"download_url": download_url}))
+
+    def _ensurePipDependencies(self):
+        if not self.hasInternetConnectionF():
+            return
+
+        try:
+            import github  # noqa
+            return
+        except ImportError:
+            pass
+
+        try:
+            slicer.util.pip_install("PyGithub")
+        except Exception as e:
+            _errorMsg = (
+                "Failed to install PyGithub.\n"
+                "Downloading the weights from Github is currently not available.\n\n"
+                f"\nInstall error: {e}")
+            self.errorDisplay(_errorMsg)
