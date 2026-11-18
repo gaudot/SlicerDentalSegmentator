@@ -215,12 +215,12 @@ The following publications illustrate some of its potential applications.
 >  https://doi.org/10.1111/ocr.70082
 
 > Taneja S, et al. Evaluation of orthodontically induced inflammatory root resorption (OIIRR) in adolescent patients with class II malocclusion undergoing treatment with rigid and hybrid fixed functional appliances: a randomized clinical trial. *Clinical Oral Investigations*. 2026;30.
->  https://doi.org/10.1007/s00784-026-06482-1
+>  https://doi.org/10.1007/s00784-026-06866-z
 
 ### Guided Tooth Autotransplantation
 
 > Salviati M, et al. A novel full digital workflow for dental autotransplantation: surgical accuracy and clinical outcomes in a prospective cohort study. *Frontiers in Oral Health*. 2026;7.
->  https://doi.org/10.3389/froh.2026.1554101
+>  https://doi.org/10.3389/froh.2026.1786907
 
 > Chen G, et al. Evaluation of the Effectiveness of an AI-assisted, Dual-Template Workflow in Improving the Accuracy of Tooth Autotransplantation. *International Dental Journal*. 2026;76(3):109460.
 >  https://doi.org/10.1016/j.identj.2026.109460
