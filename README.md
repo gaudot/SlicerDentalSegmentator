@@ -161,6 +161,7 @@ You can further refine the segmentation using the built-in **Segment Editor** to
 Available options include:
 
 - **Export segmentation:** Choose your preferred export format using the `Export segmentation` menu.
+- **Widescreen White View:** Toggle the `Widescreen White View` button in the `Export segmentation` section to switch between a widescreen 3D view with a white background (and hidden bounding box/axis labels) and your previous layout with 3D Slicer's default 3D view appearance.
 - **Surface smoothing:** Adjust the `Surface smoothing` slider to modify the smoothing algorithm applied to the 3D surface representation.
 
 <p align="center">

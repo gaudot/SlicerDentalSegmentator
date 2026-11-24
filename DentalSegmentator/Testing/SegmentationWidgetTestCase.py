@@ -187,3 +187,45 @@ class SegmentationWidgetTestCase(DentalSegmentatorTestCase):
         slicer.app.processEvents()
         self.assertTrue(self.widget.applyButton.isVisible())
         self.logic.stopSegmentation.assert_called_once()
+
+    def test_toggle_layout(self):
+        layoutManager = slicer.app.layoutManager()
+        layoutManager.setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutFourUpView)
+        viewNode = layoutManager.threeDWidget(0).mrmlViewNode()
+        defaultViewNode = slicer.vtkMRMLViewNode()
+
+        self.assertFalse(self.widget.toggleLayoutButton.isChecked())
+        self.assertEqual(layoutManager.layout, slicer.vtkMRMLLayoutNode.SlicerLayoutFourUpView)
+
+        # Toggle on
+        self.widget.toggleLayoutButton.click()
+        slicer.app.processEvents()
+        self.assertTrue(self.widget.toggleLayoutButton.isChecked())
+        self.assertEqual(layoutManager.layout, slicer.vtkMRMLLayoutNode.SlicerLayoutConventionalWidescreenView)
+        self.assertEqual(viewNode.GetBackgroundColor(), (1.0, 1.0, 1.0))
+        self.assertEqual(viewNode.GetBackgroundColor2(), (1.0, 1.0, 1.0))
+        self.assertEqual(viewNode.GetBoxVisible(), 0)
+        self.assertEqual(viewNode.GetAxisLabelsVisible(), 0)
+
+        # Toggle off restores previous layout and default 3D view properties
+        self.widget.toggleLayoutButton.click()
+        slicer.app.processEvents()
+        self.assertFalse(self.widget.toggleLayoutButton.isChecked())
+        self.assertEqual(layoutManager.layout, slicer.vtkMRMLLayoutNode.SlicerLayoutFourUpView)
+        self.assertEqual(viewNode.GetBackgroundColor(), defaultViewNode.GetBackgroundColor())
+        self.assertEqual(viewNode.GetBackgroundColor2(), defaultViewNode.GetBackgroundColor2())
+        self.assertEqual(viewNode.GetBoxVisible(), defaultViewNode.GetBoxVisible())
+        self.assertEqual(viewNode.GetAxisLabelsVisible(), defaultViewNode.GetAxisLabelsVisible())
+
+    def test_toggle_layout_preserves_user_changed_layout_when_toggled_back(self):
+        layoutManager = slicer.app.layoutManager()
+        layoutManager.setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutFourUpView)
+
+        self.widget.toggleLayoutButton.click()
+        slicer.app.processEvents()
+        self.assertEqual(layoutManager.layout, slicer.vtkMRMLLayoutNode.SlicerLayoutConventionalWidescreenView)
+
+        layoutManager.setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUp3DView)
+        self.widget.toggleLayoutButton.click()
+        slicer.app.processEvents()
+        self.assertEqual(layoutManager.layout, slicer.vtkMRMLLayoutNode.SlicerLayoutOneUp3DView)
