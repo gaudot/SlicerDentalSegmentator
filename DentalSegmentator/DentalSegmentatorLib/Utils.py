@@ -47,18 +47,22 @@ def set3DViewBackgroundColors(topColor, bottomColor):
     :param bottomColor: (r, g, b) floats between 0 and 1
     """
     import slicer
-    viewNode = slicer.app.layoutManager().threeDWidget(0).mrmlViewNode()
-    viewNode.SetBackgroundColor(bottomColor)
-    viewNode.SetBackgroundColor2(topColor)
+    layoutManager = slicer.app.layoutManager()
+    for i in range(layoutManager.threeDViewCount):
+        viewNode = layoutManager.threeDWidget(i).mrmlViewNode()
+        viewNode.SetBackgroundColor(bottomColor)
+        viewNode.SetBackgroundColor2(topColor)
 
 
-def setBoxAndTextVisibilityOnThreeDViews(isVisible):
+def setBoxAndTextVisibilityOnThreeDViews(isBoxVisible, isAxisLabelsVisible=None):
     import slicer
+    if isAxisLabelsVisible is None:
+        isAxisLabelsVisible = isBoxVisible
     layoutManager = slicer.app.layoutManager()
     for i in range(layoutManager.threeDViewCount):
         threeDViewNode = layoutManager.threeDWidget(i).mrmlViewNode()
-        threeDViewNode.SetBoxVisible(isVisible)
-        threeDViewNode.SetAxisLabelsVisible(isVisible)
+        threeDViewNode.SetBoxVisible(isBoxVisible)
+        threeDViewNode.SetAxisLabelsVisible(isAxisLabelsVisible)
 
 
 def setConventionalWideScreenView():

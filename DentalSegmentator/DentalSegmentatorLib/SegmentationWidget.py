@@ -100,11 +100,21 @@ class SegmentationWidget(qt.QWidget):
             "Higher value means stronger reduction (smaller files, less details preserved)."
         )
 
+        self.toggleLayoutButton = createButton(
+            "Widescreen White View",
+            callback=self.onToggleLayoutClicked,
+            isCheckable=True,
+            toolTip="Toggle between wide screen white 3D view and default 3D Slicer layout.",
+            parent=exportWidget,
+        )
+        self._prevLayout = None
+
         exportLayout.addRow("Export STL", self.stlCheckBox)
         exportLayout.addRow("Export OBJ", self.objCheckBox)
         exportLayout.addRow("Export NIFTI", self.niftiCheckBox)
         exportLayout.addRow("Export glTF", self.gltfCheckBox)
         exportLayout.addRow("glTF reduction factor :", self.reductionFactorSlider)
+        exportLayout.addRow(self.toggleLayoutButton)
         exportLayout.addRow(createButton("Export", callback=self.onExportClicked, parent=exportWidget))
 
         layout = qt.QVBoxLayout(self)
@@ -187,7 +197,15 @@ class SegmentationWidget(qt.QWidget):
         self.segmentEditorWidget.setMRMLSegmentEditorNode(self.segmentEditorNode)
         self.processedVolumes = {}
         self._prevSegmentationNode = None
-        self._initSlicerDisplay()
+        if self.toggleLayoutButton.isChecked():
+            self._initSlicerDisplay()
+
+    def onToggleLayoutClicked(self, isChecked):
+        if isChecked:
+            self._prevLayout = slicer.app.layoutManager().layout
+            self._initSlicerDisplay()
+        else:
+            self._restoreSlicerDisplay()
 
     @staticmethod
     def _initSlicerDisplay():
@@ -197,6 +215,25 @@ class SegmentationWidget(qt.QWidget):
         set3DViewBackgroundColors([1, 1, 1], [1, 1, 1])
         setConventionalWideScreenView()
         setBoxAndTextVisibilityOnThreeDViews(False)
+
+    def _restoreSlicerDisplay(self):
+        """
+        Restore previous layout if still on wide screen layout and reset 3D view background and cube properties to
+        Slicer's defaults.
+        """
+        layoutManager = slicer.app.layoutManager()
+        if (
+            self._prevLayout is not None
+            and layoutManager.layout == slicer.vtkMRMLLayoutNode.SlicerLayoutConventionalWidescreenView
+        ):
+            layoutManager.setLayout(self._prevLayout)
+
+        defaultViewNode = slicer.vtkMRMLViewNode()
+        set3DViewBackgroundColors(defaultViewNode.GetBackgroundColor2(), defaultViewNode.GetBackgroundColor())
+        setBoxAndTextVisibilityOnThreeDViews(
+            defaultViewNode.GetBoxVisible(),
+            defaultViewNode.GetAxisLabelsVisible(),
+        )
 
     def _updateStopIcon(self):
         self.stopButton.setIcon(qt.QIcon(self.loading.currentPixmap()))
