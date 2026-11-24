@@ -114,7 +114,6 @@ class SegmentationWidget(qt.QWidget):
         exportLayout.addRow("Export NIFTI", self.niftiCheckBox)
         exportLayout.addRow("Export glTF", self.gltfCheckBox)
         exportLayout.addRow("glTF reduction factor :", self.reductionFactorSlider)
-        exportLayout.addRow(self.toggleLayoutButton)
         exportLayout.addRow(createButton("Export", callback=self.onExportClicked, parent=exportWidget))
 
         layout = qt.QVBoxLayout(self)
@@ -170,6 +169,7 @@ class SegmentationWidget(qt.QWidget):
         surfaceSmoothingLayout = qt.QFormLayout()
         surfaceSmoothingLayout.setContentsMargins(0, 0, 0, 0)
         surfaceSmoothingLayout.addRow("Surface smoothing :", self.surfaceSmoothingSlider)
+        surfaceSmoothingLayout.addRow(self.toggleLayoutButton)
         layout.addLayout(surfaceSmoothingLayout)
         layout.addWidget(exportWidget)
         addInCollapsibleLayout(exportWidget, layout, "Export segmentation", isCollapsed=False)
